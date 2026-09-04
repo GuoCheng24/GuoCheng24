@@ -89,6 +89,13 @@ def main() -> int:
                            "to days on which no workflow ran in that repository."),
                 "repos": {}, "pypi": {},
                 "pypi_source": "GET https://pypistats.org/api/packages/{pkg}/recent - public, anyone can re-run it"}
+    hist_path0 = ROOT / "data" / "traffic.json"
+    prev_pypi = {}
+    if hist_path0.exists():
+        _h = json.loads(hist_path0.read_text())
+        if _h:
+            prev_pypi = _h[-1].get("pypi", {})
+
     rows = []
     for name in REPOS:
         t = api(f"/repos/{OWNER}/{name}/traffic/clones")
@@ -104,17 +111,21 @@ def main() -> int:
             "ci_free": {"days": len(clean), "clones": sum(d["c"] for d in clean), "uniques": clean_u},
             "daily": daily}
         if name in PYPI:
+            # pypistats rate-limits aggressively. A miss must not silently drop the
+            # package from the file, because the badge then renders "no result" -
+            # which is exactly the failure mode the static badges were replaced to
+            # avoid. Carry the previous value forward and record when it was taken.
             n = pypi_month(PYPI[name])
             if n:
-                snapshot["pypi"][name] = {"last_month": n}
+                snapshot["pypi"][name] = {"last_month": n, "as_of": snapshot["recorded"]}
+            elif prev_pypi.get(name):
+                snapshot["pypi"][name] = prev_pypi[name]
+                print(f"  {name}: pypistats rate-limited, carrying forward "
+                      f"{prev_pypi[name]['last_month']} from {prev_pypi[name].get('as_of','?')}")
 
     hist_path = ROOT / "data" / "traffic.json"
     hist_path.parent.mkdir(exist_ok=True)
     hist = json.loads(hist_path.read_text()) if hist_path.exists() else []
-    if snapshot["pypi"] or not hist:
-        pass
-    else:                              # pypistats rate-limits; keep the last good numbers
-        snapshot["pypi"] = hist[-1].get("pypi", {})
     if hist and hist[-1]["recorded"] == snapshot["recorded"]:
         hist[-1] = snapshot
     else:

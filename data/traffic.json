@@ -863,10 +863,16 @@
   },
   "pypi": {
    "scholarcheck": {
-    "last_month": 568
+    "last_month": 568,
+    "as_of": "2026-09-04"
    },
    "docxaudit": {
-    "last_month": 681
+    "last_month": 681,
+    "as_of": "2026-09-04"
+   },
+   "sciglyph": {
+    "last_month": 690,
+    "as_of": "2026-09-04"
    }
   },
   "pypi_source": "GET https://pypistats.org/api/packages/{pkg}/recent - public, anyone can re-run it"
