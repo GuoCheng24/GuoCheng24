@@ -688,6 +688,24 @@
      }
     ]
    }
-  }
+  },
+  "pypi": {
+   "scholarcheck": {
+    "last_month": 568,
+    "last_week": 47,
+    "last_day": 7
+   },
+   "sciglyph": {
+    "last_month": 690,
+    "last_week": 70,
+    "last_day": 13
+   },
+   "docxaudit": {
+    "last_month": 681,
+    "last_week": 75,
+    "last_day": 16
+   }
+  },
+  "pypi_source": "GET https://pypistats.org/api/packages/{pkg}/recent - public, anyone can re-run it"
  }
 ]
