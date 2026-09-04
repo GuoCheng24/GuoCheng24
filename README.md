@@ -38,22 +38,26 @@ Each of those came with a reproduction and a before/after table, not a hunch.
 | [topocheck](https://github.com/GuoCheng24/topocheck) | Five checks for topology-aware segmentation claims — including the random-repair baseline that beat every learned repair I tried. |
 | [scholarcheck](https://pypi.org/project/scholarcheck/) · [sciglyph](https://pypi.org/project/sciglyph/) · [docxaudit](https://pypi.org/project/docxaudit/) | On PyPI, and installed by people I have never met. Verify citations before a reviewer does; publication figures that check their own layout; find what a converter silently dropped. |
 | [worldmodel-from-scratch](https://github.com/GuoCheng24/worldmodel-from-scratch) | Build a world model in an afternoon, then measure where it breaks. The README separates claims that hold on any machine from those that do not, and CI checks only the first kind. |
+| [world-model-map](https://github.com/GuoCheng24/world-model-map) | A researcher's map of open-source world models — what each one actually claims, what its authors say it cannot do, and an evidence grade per entry. CI re-resolves every citation. |
+| [kakeya-conjecture-lab](https://github.com/GuoCheng24/kakeya-conjecture-lab) | An interactive lab for the Kakeya conjecture. The dimension meter recomputes its own numbers in the test suite, so the page cannot drift from the mathematics. |
 
 ### Who actually uses this
 
-Stars are a poor signal at this size, so here is the traffic instead — unique cloners over
-the fourteen days to 2026-09-04, straight from GitHub's traffic API:
+Stars are a poor signal at this size, so here is the traffic instead — clones and the number
+of distinct people behind them, over the fourteen days to 2026-09-04, from GitHub's traffic API.
+Counted, not estimated; the numbers move, so the date is part of the claim.
 
-| Repository | Clones (unique people) | PyPI installs / month |
+| Repository | Clones · unique people (14 d to 2026-09-04) | PyPI |
 |---|---|---|
-| [worldmodel-from-scratch](https://github.com/GuoCheng24/worldmodel-from-scratch) | 250 (64) | — |
-| [topocheck](https://github.com/GuoCheng24/topocheck) | 116 (41) | — |
-| [sciglyph](https://github.com/GuoCheng24/sciglyph) | 106 (35) | [on PyPI](https://pypistats.org/packages/sciglyph) |
-| [scholarcheck](https://github.com/GuoCheng24/scholarcheck) | 93 (29) | 568 |
-| [docxaudit](https://github.com/GuoCheng24/docxaudit) | 88 (33) | [on PyPI](https://pypistats.org/packages/docxaudit) |
-| [breakthrough-harness](https://github.com/GuoCheng24/breakthrough-harness) | 64 (35) | — |
-
-Counted, not estimated. The numbers move, so treat the date as part of the claim.
+| [worldmodel-from-scratch](https://github.com/GuoCheng24/worldmodel-from-scratch) | ![](https://img.shields.io/badge/clones-250-1f6feb) ![](https://img.shields.io/badge/people-64-555) | — |
+| [topocheck](https://github.com/GuoCheng24/topocheck) | ![](https://img.shields.io/badge/clones-116-1f6feb) ![](https://img.shields.io/badge/people-41-555) | — |
+| [sciglyph](https://github.com/GuoCheng24/sciglyph) | ![](https://img.shields.io/badge/clones-106-1f6feb) ![](https://img.shields.io/badge/people-35-555) | ![](https://img.shields.io/badge/PyPI-690%2Fmonth-0b6e4f) |
+| [scholarcheck](https://github.com/GuoCheng24/scholarcheck) | ![](https://img.shields.io/badge/clones-93-1f6feb) ![](https://img.shields.io/badge/people-29-555) | ![](https://img.shields.io/badge/PyPI-568%2Fmonth-0b6e4f) |
+| [docxaudit](https://github.com/GuoCheng24/docxaudit) | ![](https://img.shields.io/badge/clones-88-1f6feb) ![](https://img.shields.io/badge/people-33-555) | [on PyPI](https://pypistats.org/packages/docxaudit) |
+| [kakeya-conjecture-lab](https://github.com/GuoCheng24/kakeya-conjecture-lab) | ![](https://img.shields.io/badge/clones-75-1f6feb) ![](https://img.shields.io/badge/people-36-555) | — |
+| [breakthrough-harness](https://github.com/GuoCheng24/breakthrough-harness) | ![](https://img.shields.io/badge/clones-64-1f6feb) ![](https://img.shields.io/badge/people-35-555) | — |
+| [world-model-map](https://github.com/GuoCheng24/world-model-map) | ![](https://img.shields.io/badge/clones-31-1f6feb) ![](https://img.shields.io/badge/people-19-555) | — |
+| [ct-reconstruction-harness](https://github.com/GuoCheng24/ct-reconstruction-harness) | *too new to have traffic* | — |
 
 ### How I work
 

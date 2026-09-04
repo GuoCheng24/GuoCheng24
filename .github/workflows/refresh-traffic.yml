@@ -1,0 +1,32 @@
+name: refresh traffic numbers
+
+# The traffic API only keeps fourteen days, so the table has to be rewritten
+# before its window slides out from under it. Needs a PAT with repo scope in
+# the TRAFFIC_TOKEN secret; without one the job is skipped rather than failing.
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: rewrite the table
+        if: ${{ secrets.TRAFFIC_TOKEN != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
+        run: python scripts/refresh_traffic.py
+      - name: commit if anything moved
+        if: ${{ secrets.TRAFFIC_TOKEN != '' }}
+        run: |
+          git config user.name "Guo Cheng"
+          git config user.email "224264187+GuoCheng24@users.noreply.github.com"
+          git diff --quiet || { git commit -am "Refresh the traffic numbers"; git push; }
