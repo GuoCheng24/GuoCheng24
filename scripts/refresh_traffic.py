@@ -12,6 +12,7 @@ Needs a token with repo scope (traffic is owner-only). Run:
 """
 from __future__ import annotations
 
+import collections
 import datetime as _dt
 import json
 import os
@@ -26,6 +27,7 @@ REPOS = ["worldmodel-from-scratch", "topocheck", "sciglyph", "scholarcheck", "do
 PYPI = {"scholarcheck": "scholarcheck", "sciglyph": "sciglyph", "docxaudit": "docxaudit"}
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DATA = "https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json"
+RAW = "https://raw.githubusercontent.com/GuoCheng24/GuoCheng24/main/data/traffic.json"
 
 
 def api(path: str) -> dict:
@@ -65,58 +67,86 @@ def mark_stale() -> int:
     return 0
 
 
+
+def dyn(query: str, label: str, colour: str) -> str:
+    """A live shields query against the committed file, not a number baked into a URL."""
+    import urllib.parse as _u
+    return (f"https://img.shields.io/badge/dynamic/json?url={_u.quote(RAW, safe='')}"
+            f"&query={_u.quote(query, safe='')}&label={_u.quote(label)}&color={colour}")
+
 def main() -> int:
     if "--mark-stale" in os.sys.argv:
         return mark_stale()
 
-    # Keep the raw responses, not just the totals: the traffic endpoint is
-    # owner-only, so a reader cannot re-run it. The committed file and its git
-    # history are the only audit trail a visitor has.
+    # GitHub counts an Actions checkout as a clone, so raw totals include this
+    # account's own CI - on the first version of this page that was 13-56% of
+    # every repository's traffic. Days with no workflow run in that repository
+    # are the closest available estimate of outside interest.
     snapshot = {"recorded": _dt.date.today().isoformat(),
                 "source": "GET /repos/%s/{repo}/traffic/clones - visible only to the repository owner" % OWNER,
-                "window": "the 14 days ending on the recorded date", "repos": {}}
+                "window": "the 14 days ending on the recorded date",
+                "caveat": ("Raw totals include this account's own CI checkouts. 'ci_free' restricts "
+                           "to days on which no workflow ran in that repository."),
+                "repos": {}, "pypi": {},
+                "pypi_source": "GET https://pypistats.org/api/packages/{pkg}/recent - public, anyone can re-run it"}
     rows = []
     for name in REPOS:
         t = api(f"/repos/{OWNER}/{name}/traffic/clones")
-        rows.append((name, t["count"], t["uniques"]))
+        runs = api(f"/repos/{OWNER}/{name}/actions/runs?per_page=100").get("workflow_runs", [])
+        ci_days = collections.Counter(r["created_at"][:10] for r in runs)
+        daily = [{"t": d["timestamp"][:10], "c": d["count"], "u": d["uniques"],
+                  "ci_runs": ci_days.get(d["timestamp"][:10], 0)} for d in t.get("clones", [])]
+        clean = [d for d in daily if d["ci_runs"] == 0]
+        clean_u = sum(d["u"] for d in clean)
+        rows.append((name, t.get("count", 0), t.get("uniques", 0), clean_u))
         snapshot["repos"][name] = {
-            "count": t["count"], "uniques": t["uniques"],
-            "daily": [{"t": d["timestamp"][:10], "c": d["count"], "u": d["uniques"]}
-                      for d in t.get("clones", [])]}
+            "count": t.get("count", 0), "uniques": t.get("uniques", 0),
+            "ci_free": {"days": len(clean), "clones": sum(d["c"] for d in clean), "uniques": clean_u},
+            "daily": daily}
+        if name in PYPI:
+            n = pypi_month(PYPI[name])
+            if n:
+                snapshot["pypi"][name] = {"last_month": n}
+
     hist_path = ROOT / "data" / "traffic.json"
     hist_path.parent.mkdir(exist_ok=True)
     hist = json.loads(hist_path.read_text()) if hist_path.exists() else []
-    if not hist or hist[-1]["recorded"] != snapshot["recorded"]:
-        hist.append(snapshot)
-    else:
+    if snapshot["pypi"] or not hist:
+        pass
+    else:                              # pypistats rate-limits; keep the last good numbers
+        snapshot["pypi"] = hist[-1].get("pypi", {})
+    if hist and hist[-1]["recorded"] == snapshot["recorded"]:
         hist[-1] = snapshot
+    else:
+        hist.append(snapshot)
     hist_path.write_text(json.dumps(hist, indent=1, ensure_ascii=False) + "\n")
-    rows.sort(key=lambda r: -r[1])
 
-    out = ["| Repository | Clones · unique people (14 d to DATE) | PyPI |", "|---|---|---|"]
-    for name, count, uniques in rows:
-        repo_link = f"[{name}](https://github.com/{OWNER}/{name})"
-        link = lambda b: f"[{b}]({DATA})"
-        cell = (f"{link(badge('clones', str(count), '1f6feb'))} "
-                f"{link(badge('people', str(uniques), '555'))}"
-                if count else "*too new to have traffic*")
-        if name in PYPI:
-            n = pypi_month(PYPI[name])
-            p = (badge("PyPI", f"{n}/month", "0b6e4f") if n
-                 else f"[on PyPI](https://pypistats.org/packages/{PYPI[name]})")
-        else:
-            p = "—"
-        out.append(f"| {repo_link} | {cell} | {p} |")
-
+    rows.sort(key=lambda r: -r[3])
     today = _dt.date.today().isoformat()
-    table = "\n".join(out).replace("14 d to DATE", f"14 d to {today}")
+    out = [f"| Repository | People who cloned it, CI excluded ({today}) | Raw total | PyPI / month |",
+           "|---|---|---|---|"]
+    for name, count, uniques, clean_u in rows:
+        repo_link = f"[{name}](https://github.com/{OWNER}/{name})"
+        if count == 0:
+            cell, raw = "*too new to have traffic*", "—"
+        else:
+            cell = f"[![]({dyn(f'$[-1:].repos.{name}.ci_free.uniques', 'people', '1f6feb')})]({DATA})"
+            raw = f"[![]({dyn(f'$[-1:].repos.{name}.uniques', 'incl. CI', '555')})]({DATA})"
+        pcell = (f"[![]({dyn(f'$[-1:].pypi.{name}.last_month', 'PyPI/month', '0b6e4f')})]"
+                 f"(https://pypistats.org/packages/{PYPI[name]})" if name in PYPI else "—")
+        out.append(f"| {repo_link} | {cell} | {raw} | {pcell} |")
+    table = "\n".join(out)
+
     readme = ROOT / "README.md"
-    s = readme.read_text(encoding="utf-8")
-    s = re.sub(r"\| Repository \| Clones[^\n]*\n\|---\|---\|---\|\n(?:\|[^\n]*\n)+",
-               table + "\n", s, count=1)
-    s = re.sub(r"over the fourteen days to \d{4}-\d{2}-\d{2}",
-               f"over the fourteen days to {today}", s)
-    readme.write_text(s, encoding="utf-8")
+    body = readme.read_text(encoding="utf-8").split("\n")
+    try:
+        a = next(k for k, l in enumerate(body) if l.startswith("| Repository |"))
+    except StopIteration:
+        raise SystemExit("traffic table header not found in README.md")
+    b = a
+    while b < len(body) and body[b].startswith("|"):
+        b += 1
+    readme.write_text("\n".join(body[:a] + table.split("\n") + body[b:]), encoding="utf-8")
     print(f"refreshed {len(rows)} repositories on {today}")
     return 0
 
