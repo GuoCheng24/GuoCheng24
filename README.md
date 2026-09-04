@@ -15,18 +15,17 @@ matched, each one written down in
 
 ### Contributions to other people's projects
 
-[![Contributor to github/awesome-copilot](https://img.shields.io/badge/contributor-github%2Fawesome--copilot-1f6feb?logo=github&logoColor=white)](https://github.com/github/awesome-copilot#contributors-)
-[![agent definition](https://img.shields.io/badge/agent-research--harness--engineer-0b6e4f?logo=githubcopilot&logoColor=white)](https://github.com/github/awesome-copilot/blob/main/agents/research-harness-engineer.agent.md)
-
+Four of the five are bugs found by reading someone else's source, each submitted with a reproduction
+and a before/after table. The merged one is the smallest of them; I list it first only because it is
+the one a reader can verify in a click.
 
 | Where | What | Status |
 |---|---|---|
-| [github/awesome-copilot](https://github.com/github/awesome-copilot) — GitHub's own collection, 38.6k stars | [`research-harness-engineer`](https://github.com/github/awesome-copilot/blob/main/agents/research-harness-engineer.agent.md), an agent definition for running research as a falsification loop | **merged**, and on the [contributor wall](https://github.com/github/awesome-copilot#contributors-) |
-| [InternScience/MLEvolve](https://github.com/InternScience/MLEvolve) | [#8](https://github.com/InternScience/MLEvolve/pull/8) the data-leakage trigger compared floats with `==`, so a default-on guard never fired · [#9](https://github.com/InternScience/MLEvolve/pull/9) the memory block sorted minimise-metrics backwards, showing the model the worst sibling as the best | open |
-| [ResearAI/DeepScientist](https://github.com/ResearAI/DeepScientist) | [#110](https://github.com/ResearAI/DeepScientist/pull/110) `pytest` aborted collection on a clean checkout — 56 test files lost to one undeclared optional import | open |
-| [InternScience/InternAgent](https://github.com/InternScience/InternAgent) | [#27](https://github.com/InternScience/InternAgent/pull/27) a task was configured to *maximise* test-set MSE, so a worse error scored as progress | open |
+| [InternScience/MLEvolve](https://github.com/InternScience/MLEvolve) | [#8](https://github.com/InternScience/MLEvolve/pull/8) a data-leakage guard, on by default, compared floats with `==` — so the 117 lines behind it had never once run · [#9](https://github.com/InternScience/MLEvolve/pull/9) the memory block sorted minimise-metrics backwards, so the model was shown the worst sibling and told it was the best | open |
+| [InternScience/InternAgent](https://github.com/InternScience/InternAgent) | [#27](https://github.com/InternScience/InternAgent/pull/27) a task was configured to *maximise* test-set MSE, so a worse error scored as progress and was rewarded. One character | open |
+| [ResearAI/DeepScientist](https://github.com/ResearAI/DeepScientist) | [#110](https://github.com/ResearAI/DeepScientist/pull/110) `pytest` aborted collection on a clean checkout — 56 test files lost to one undeclared optional import, in a repository whose CONTRIBUTING tells you to run exactly that | open |
+| [github/awesome-copilot](https://github.com/github/awesome-copilot) — GitHub's own collection | [`research-harness-engineer`](https://github.com/github/awesome-copilot/blob/main/agents/research-harness-engineer.agent.md), an agent definition for running research as a falsification loop · [#2938](https://github.com/github/awesome-copilot/pull/2938) fixes a row in their contributor table that overflows its own width | **merged**, and on the [contributor wall](https://github.com/github/awesome-copilot#contributors-) |
 
-Each of those came with a reproduction and a before/after table, not a hunch.
 
 ### Things I maintain
 
