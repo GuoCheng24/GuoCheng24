@@ -50,7 +50,23 @@ def badge(label: str, value: str, colour: str) -> str:
     return f"![](https://img.shields.io/badge/{q(label)}-{q(value)}-{colour})"
 
 
+def mark_stale() -> int:
+    """No token: say when the numbers were last verified rather than let them rot quietly."""
+    readme = ROOT / "README.md"
+    s = readme.read_text(encoding="utf-8")
+    note = ("\n*Last verified against the API on the date above; this page could not re-check them "
+            "today because no traffic token is configured.*\n")
+    marker = "*Last verified against the API"
+    if marker not in s:
+        s = s.replace("\n### How I work", note + "\n### How I work", 1)
+        readme.write_text(s, encoding="utf-8")
+        print("marked the table as unverified")
+    return 0
+
+
 def main() -> int:
+    if "--mark-stale" in os.sys.argv:
+        return mark_stale()
     rows = []
     for name in REPOS:
         t = api(f"/repos/{OWNER}/{name}/traffic/clones")

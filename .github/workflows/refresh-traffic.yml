@@ -1,8 +1,13 @@
 name: refresh traffic numbers
 
-# The traffic API only keeps fourteen days, so the table has to be rewritten
-# before its window slides out from under it. Needs a PAT with repo scope in
-# the TRAFFIC_TOKEN secret; without one the job is skipped rather than failing.
+# The traffic API keeps only fourteen days, so the table has to be rewritten
+# before its window slides out from under it. It also requires push access to
+# each repository, which the default GITHUB_TOKEN does not have for anything
+# but this one - hence a PAT in TRAFFIC_TOKEN.
+#
+# Without that secret the job does not fail silently: it appends a line to the
+# README saying when the numbers were last verified, so a stale table announces
+# itself instead of pretending to be current.
 on:
   schedule:
     - cron: "0 7 * * 1"
@@ -19,13 +24,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: rewrite the table
-        if: ${{ secrets.TRAFFIC_TOKEN != '' }}
+
+      - name: rewrite the table from the traffic API
+        id: refresh
         env:
           GH_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
-        run: python scripts/refresh_traffic.py
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "no TRAFFIC_TOKEN; marking the table as unverified instead"
+            python scripts/refresh_traffic.py --mark-stale
+          else
+            python scripts/refresh_traffic.py
+          fi
+
       - name: commit if anything moved
-        if: ${{ secrets.TRAFFIC_TOKEN != '' }}
         run: |
           git config user.name "Guo Cheng"
           git config user.email "224264187+GuoCheng24@users.noreply.github.com"
