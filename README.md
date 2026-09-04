@@ -15,16 +15,17 @@ matched, each one written down in
 
 ### Contributions to other people's projects
 
-Four of the five are bugs found by reading someone else's source, each submitted with a reproduction
-and a before/after table. The merged one is the smallest of them; I list it first only because it is
-the one a reader can verify in a click.
+Bugs found by reading someone else's source, each submitted with a reproduction and a before/after
+table. Three are merged. The two in MLEvolve went in about a day after filing, with no review
+comments — the same defect family both times: a check that silently produces a plausible wrong
+answer instead of failing.
 
 | Where | What | Status |
 |---|---|---|
-| [InternScience/MLEvolve](https://github.com/InternScience/MLEvolve) | [#8](https://github.com/InternScience/MLEvolve/pull/8) a data-leakage guard, on by default, compared floats with `==` — so the 117 lines behind it had never once run · [#9](https://github.com/InternScience/MLEvolve/pull/9) the memory block sorted minimise-metrics backwards, so the model was shown the worst sibling and told it was the best | open |
+| [InternScience/MLEvolve](https://github.com/InternScience/MLEvolve) — the agent that competes on MLE-bench | [#8](https://github.com/InternScience/MLEvolve/pull/8) a data-leakage guard, on by default, compared floats with `==` — so the 117 lines behind it had never once run · [#9](https://github.com/InternScience/MLEvolve/pull/9) the memory block sorted minimise-metrics backwards, so the model was shown the worst sibling and told it was the best | **both merged**, and now [third contributor](https://github.com/InternScience/MLEvolve/graphs/contributors) |
+| [github/awesome-copilot](https://github.com/github/awesome-copilot) — GitHub's own collection | [`research-harness-engineer`](https://github.com/github/awesome-copilot/blob/main/agents/research-harness-engineer.agent.md), an agent definition for running research as a falsification loop · [#2938](https://github.com/github/awesome-copilot/pull/2938) fixes a row in their contributor table that overflows its own width | **merged**, and on the [contributor wall](https://github.com/github/awesome-copilot#contributors-) |
 | [InternScience/InternAgent](https://github.com/InternScience/InternAgent) | [#27](https://github.com/InternScience/InternAgent/pull/27) a task was configured to *maximise* test-set MSE, so a worse error scored as progress and was rewarded. One character | open |
 | [ResearAI/DeepScientist](https://github.com/ResearAI/DeepScientist) | [#110](https://github.com/ResearAI/DeepScientist/pull/110) `pytest` aborted collection on a clean checkout — 56 test files lost to one undeclared optional import, in a repository whose CONTRIBUTING tells you to run exactly that | open |
-| [github/awesome-copilot](https://github.com/github/awesome-copilot) — GitHub's own collection | [`research-harness-engineer`](https://github.com/github/awesome-copilot/blob/main/agents/research-harness-engineer.agent.md), an agent definition for running research as a falsification loop · [#2938](https://github.com/github/awesome-copilot/pull/2938) fixes a row in their contributor table that overflows its own width | **merged**, and on the [contributor wall](https://github.com/github/awesome-copilot#contributors-) |
 
 
 ### Things I maintain
@@ -34,7 +35,7 @@ the one a reader can verify in a click.
 | [breakthrough-harness](https://github.com/GuoCheng24/breakthrough-harness) | Make a research agent hard to fool. Adapters for nine stacks; every claim in the README is asserted by a test. Works with DeepSeek Harness with nothing to copy — its skill provider scans `.agents/skills`, which this repo already has. |
 | [ct-reconstruction-harness](https://github.com/GuoCheng24/ct-reconstruction-harness) | Reproduce the LoDoPaB-CT baselines from scratch (FBP 31.05 vs official 30.19; TV-Adam 33.83 vs 33.36), then a generate-and-select loop finds TGV at 34.51 held out, against a published 34.41. Every guard is run against a deliberately broken operator. |
 | [ifeval-reproduction](https://github.com/GuoCheng24/ifeval-reproduction) | Reproducing a published IFEval score on one shared GPU. Three arms and a pre-registration chain that CI re-hashes on every push. The third arm looked like an 11-point gain from thinking mode until the paired test showed the first arm scores the same on those same prompts — the subsample was easier. |
-| [topocheck](https://github.com/GuoCheng24/topocheck) | Five checks for topology-aware segmentation claims — including the random-repair baseline that beat every learned repair I tried. |
+| [topocheck](https://github.com/GuoCheng24/topocheck) [![](https://img.shields.io/pypi/v/topocheck?label=PyPI&color=0b6e4f)](https://pypi.org/project/topocheck/) | Five checks for topology-aware segmentation claims — including the random-repair baseline that beat every learned repair I tried. |
 | [scholarcheck](https://pypi.org/project/scholarcheck/) · [sciglyph](https://pypi.org/project/sciglyph/) · [docxaudit](https://pypi.org/project/docxaudit/) | On PyPI, and installed by people I have never met. Verify citations before a reviewer does; publication figures that check their own layout; find what a converter silently dropped. |
 | [worldmodel-from-scratch](https://github.com/GuoCheng24/worldmodel-from-scratch) | Build a world model in an afternoon, then measure where it breaks. The README separates claims that hold on any machine from those that do not, and CI checks only the first kind. |
 | [world-model-map](https://github.com/GuoCheng24/world-model-map) | A researcher's map of open-source world models — what each one actually claims, what its authors say it cannot do, and an evidence grade per entry. CI re-resolves every citation. |
