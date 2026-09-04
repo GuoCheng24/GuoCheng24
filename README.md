@@ -1,8 +1,7 @@
 ## Guo Cheng
 
-Medical imaging, inverse problems, and the evaluation of AI systems. I work at both ends —
-the applied mathematics (topology, distribution-free uncertainty, optimal transport) and the
-code that checks whether it survived contact with data. Most of what is public here is a
+Medical imaging, inverse problems, and the evaluation of AI systems. I work at both ends — the
+applied mathematics and the code that checks whether it survived contact with data. Most of what is public here is a
 harness: something built to prove its own headline number wrong, which says so in the README
 when it succeeds. The methods work sits mainly in unreleased repositories; what you can read
 below is the part I can show.
@@ -72,6 +71,25 @@ you can check without me.**
 | [worldmodel-from-scratch](https://github.com/GuoCheng24/worldmodel-from-scratch) | [![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FGuoCheng24%2FGuoCheng24%2Fmain%2Fdata%2Ftraffic.json&query=%24%5B-1%3A%5D.repos.worldmodel-from-scratch.ci_free.uniques&label=people&color=1f6feb)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | [![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FGuoCheng24%2FGuoCheng24%2Fmain%2Fdata%2Ftraffic.json&query=%24%5B-1%3A%5D.repos.worldmodel-from-scratch.uniques&label=incl.%20CI&color=555)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | — |
 | [breakthrough-harness](https://github.com/GuoCheng24/breakthrough-harness) | [![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FGuoCheng24%2FGuoCheng24%2Fmain%2Fdata%2Ftraffic.json&query=%24%5B-1%3A%5D.repos.breakthrough-harness.ci_free.uniques&label=people&color=1f6feb)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | [![](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2FGuoCheng24%2FGuoCheng24%2Fmain%2Fdata%2Ftraffic.json&query=%24%5B-1%3A%5D.repos.breakthrough-harness.uniques&label=incl.%20CI&color=555)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | — |
 | [ct-reconstruction-harness](https://github.com/GuoCheng24/ct-reconstruction-harness) | *too new to have traffic* | — | — |
+
+### Work that is not public yet
+
+Most of the methods work is in unreleased repositories, because a paper or a filing is still open.
+It is described only in outline: an idea in submission is easy to take and hard to get back. This
+section exists so the public half of the page is not mistaken for the whole of it.
+
+Four lines are open at the moment. Between them they cover guarantees for medical image
+segmentation, what a pre-treatment image can and cannot establish about a treatment decision, image
+synthesis for adaptive radiotherapy, and prognostic markers in functional imaging. One has a patent
+filed against it; two are with reviewers; one is written and held.
+
+What they have in common is the part I would rather be judged on than the individual results: each
+began with a measured ceiling and a random baseline before any method was built, each carries a
+shuffled or permuted control wherever one is definable, and each has a written record of the
+attempts that did not survive those checks. Several lines were closed on exactly that basis, which
+is why there are four here rather than a dozen.
+
+Happy to go into any of it properly in a conversation.
 
 ### How I work
 
