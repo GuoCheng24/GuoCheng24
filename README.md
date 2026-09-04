@@ -43,20 +43,27 @@ Each of those came with a reproduction and a before/after table, not a hunch.
 
 ### Who actually uses this
 
-Stars are a poor signal at this size, so here is the traffic instead — clones and the number
-of distinct people behind them, over the fourteen days to 2026-09-04, from GitHub's traffic API.
-Counted, not estimated; the numbers move, so the date is part of the claim.
+Stars are a poor signal at this size, so here is the traffic instead — clones and the number of
+distinct people behind them, over the fourteen days to 2026-09-04.
+
+**You cannot check these yourself, and that is a problem with the claim, not with you.** GitHub's
+traffic API is visible only to a repository's owner. So the raw API response — including the
+day-by-day breakdown behind every total — is committed to [`data/traffic.json`](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) and
+appended to on each refresh. Every badge below links to it, and
+[the file's history](https://github.com/GuoCheng24/GuoCheng24/commits/main/data/traffic.json)
+shows the numbers being recorded over time rather than written down once. That is the closest
+thing to verifiable I can offer for an owner-only endpoint.
 
 | Repository | Clones · unique people (14 d to 2026-09-04) | PyPI |
 |---|---|---|
-| [worldmodel-from-scratch](https://github.com/GuoCheng24/worldmodel-from-scratch) | ![](https://img.shields.io/badge/clones-250-1f6feb) ![](https://img.shields.io/badge/people-64-555) | — |
-| [topocheck](https://github.com/GuoCheng24/topocheck) | ![](https://img.shields.io/badge/clones-116-1f6feb) ![](https://img.shields.io/badge/people-41-555) | — |
-| [sciglyph](https://github.com/GuoCheng24/sciglyph) | ![](https://img.shields.io/badge/clones-106-1f6feb) ![](https://img.shields.io/badge/people-35-555) | ![](https://img.shields.io/badge/PyPI-690%2Fmonth-0b6e4f) |
-| [scholarcheck](https://github.com/GuoCheng24/scholarcheck) | ![](https://img.shields.io/badge/clones-93-1f6feb) ![](https://img.shields.io/badge/people-29-555) | ![](https://img.shields.io/badge/PyPI-568%2Fmonth-0b6e4f) |
-| [docxaudit](https://github.com/GuoCheng24/docxaudit) | ![](https://img.shields.io/badge/clones-88-1f6feb) ![](https://img.shields.io/badge/people-33-555) | [on PyPI](https://pypistats.org/packages/docxaudit) |
-| [kakeya-conjecture-lab](https://github.com/GuoCheng24/kakeya-conjecture-lab) | ![](https://img.shields.io/badge/clones-75-1f6feb) ![](https://img.shields.io/badge/people-36-555) | — |
-| [breakthrough-harness](https://github.com/GuoCheng24/breakthrough-harness) | ![](https://img.shields.io/badge/clones-64-1f6feb) ![](https://img.shields.io/badge/people-35-555) | — |
-| [world-model-map](https://github.com/GuoCheng24/world-model-map) | ![](https://img.shields.io/badge/clones-31-1f6feb) ![](https://img.shields.io/badge/people-19-555) | — |
+| [worldmodel-from-scratch](https://github.com/GuoCheng24/worldmodel-from-scratch) | [![](https://img.shields.io/badge/clones-250-1f6feb)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) [![](https://img.shields.io/badge/people-64-555)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | — |
+| [topocheck](https://github.com/GuoCheng24/topocheck) | [![](https://img.shields.io/badge/clones-116-1f6feb)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) [![](https://img.shields.io/badge/people-41-555)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | — |
+| [sciglyph](https://github.com/GuoCheng24/sciglyph) | [![](https://img.shields.io/badge/clones-106-1f6feb)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) [![](https://img.shields.io/badge/people-35-555)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | ![](https://img.shields.io/badge/PyPI-690%2Fmonth-0b6e4f) |
+| [scholarcheck](https://github.com/GuoCheng24/scholarcheck) | [![](https://img.shields.io/badge/clones-93-1f6feb)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) [![](https://img.shields.io/badge/people-29-555)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | ![](https://img.shields.io/badge/PyPI-568%2Fmonth-0b6e4f) |
+| [docxaudit](https://github.com/GuoCheng24/docxaudit) | [![](https://img.shields.io/badge/clones-88-1f6feb)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) [![](https://img.shields.io/badge/people-33-555)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | ![](https://img.shields.io/badge/PyPI-681%2Fmonth-0b6e4f) |
+| [kakeya-conjecture-lab](https://github.com/GuoCheng24/kakeya-conjecture-lab) | [![](https://img.shields.io/badge/clones-75-1f6feb)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) [![](https://img.shields.io/badge/people-36-555)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | — |
+| [breakthrough-harness](https://github.com/GuoCheng24/breakthrough-harness) | [![](https://img.shields.io/badge/clones-64-1f6feb)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) [![](https://img.shields.io/badge/people-35-555)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | — |
+| [world-model-map](https://github.com/GuoCheng24/world-model-map) | [![](https://img.shields.io/badge/clones-31-1f6feb)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) [![](https://img.shields.io/badge/people-19-555)](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json) | — |
 | [ct-reconstruction-harness](https://github.com/GuoCheng24/ct-reconstruction-harness) | *too new to have traffic* | — |
 
 ### How I work

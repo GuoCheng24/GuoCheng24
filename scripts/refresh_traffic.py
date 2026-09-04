@@ -25,6 +25,7 @@ REPOS = ["worldmodel-from-scratch", "topocheck", "sciglyph", "scholarcheck", "do
          "ct-reconstruction-harness"]
 PYPI = {"scholarcheck": "scholarcheck", "sciglyph": "sciglyph", "docxaudit": "docxaudit"}
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+DATA = "https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json"
 
 
 def api(path: str) -> dict:
@@ -67,16 +68,37 @@ def mark_stale() -> int:
 def main() -> int:
     if "--mark-stale" in os.sys.argv:
         return mark_stale()
+
+    # Keep the raw responses, not just the totals: the traffic endpoint is
+    # owner-only, so a reader cannot re-run it. The committed file and its git
+    # history are the only audit trail a visitor has.
+    snapshot = {"recorded": _dt.date.today().isoformat(),
+                "source": "GET /repos/%s/{repo}/traffic/clones - visible only to the repository owner" % OWNER,
+                "window": "the 14 days ending on the recorded date", "repos": {}}
     rows = []
     for name in REPOS:
         t = api(f"/repos/{OWNER}/{name}/traffic/clones")
         rows.append((name, t["count"], t["uniques"]))
+        snapshot["repos"][name] = {
+            "count": t["count"], "uniques": t["uniques"],
+            "daily": [{"t": d["timestamp"][:10], "c": d["count"], "u": d["uniques"]}
+                      for d in t.get("clones", [])]}
+    hist_path = ROOT / "data" / "traffic.json"
+    hist_path.parent.mkdir(exist_ok=True)
+    hist = json.loads(hist_path.read_text()) if hist_path.exists() else []
+    if not hist or hist[-1]["recorded"] != snapshot["recorded"]:
+        hist.append(snapshot)
+    else:
+        hist[-1] = snapshot
+    hist_path.write_text(json.dumps(hist, indent=1, ensure_ascii=False) + "\n")
     rows.sort(key=lambda r: -r[1])
 
     out = ["| Repository | Clones · unique people (14 d to DATE) | PyPI |", "|---|---|---|"]
     for name, count, uniques in rows:
-        link = f"[{name}](https://github.com/{OWNER}/{name})"
-        cell = (f"{badge('clones', str(count), '1f6feb')} {badge('people', str(uniques), '555')}"
+        repo_link = f"[{name}](https://github.com/{OWNER}/{name})"
+        link = lambda b: f"[{b}]({DATA})"
+        cell = (f"{link(badge('clones', str(count), '1f6feb'))} "
+                f"{link(badge('people', str(uniques), '555'))}"
                 if count else "*too new to have traffic*")
         if name in PYPI:
             n = pypi_month(PYPI[name])
@@ -84,7 +106,7 @@ def main() -> int:
                  else f"[on PyPI](https://pypistats.org/packages/{PYPI[name]})")
         else:
             p = "—"
-        out.append(f"| {link} | {cell} | {p} |")
+        out.append(f"| {repo_link} | {cell} | {p} |")
 
     today = _dt.date.today().isoformat()
     table = "\n".join(out).replace("14 d to DATE", f"14 d to {today}")
