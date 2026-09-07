@@ -93,6 +93,8 @@ is why there are four here rather than a dozen.
 
 Happy to go into any of it properly in a conversation.
 
+*Last verified against the API on the date above; this page could not re-check them today because no traffic token is configured.*
+
 ### How I work
 
 Numbers go to disk before sentences are written about them. Every guard is run against a
