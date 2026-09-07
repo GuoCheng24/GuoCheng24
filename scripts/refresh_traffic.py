@@ -23,7 +23,7 @@ import urllib.request
 OWNER = "GuoCheng24"
 REPOS = ["worldmodel-from-scratch", "topocheck", "sciglyph", "scholarcheck", "docxaudit",
          "kakeya-conjecture-lab", "breakthrough-harness", "world-model-map",
-         "ct-reconstruction-harness"]
+         "ct-reconstruction-harness", "ifeval-reproduction"]
 PYPI = {"scholarcheck": "scholarcheck", "sciglyph": "sciglyph", "docxaudit": "docxaudit"}
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DATA = "https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json"
