@@ -158,7 +158,17 @@ def main() -> int:
     b = a
     while b < len(body) and body[b].startswith("|"):
         b += 1
-    readme.write_text("\n".join(body[:a] + table.split("\n") + body[b:]), encoding="utf-8")
+    s = "\n".join(body[:a] + table.split("\n") + body[b:])
+
+    # A successful refresh has to clear the note mark_stale() leaves behind.
+    # Without this the page kept saying "could not re-check them today" on days
+    # when it had just re-checked them, because the note was only ever added.
+    kept = [ln for ln in s.split("\n") if not ln.startswith("*Last verified against the API")]
+    while len(kept) > 1 and kept[-1] == "" and kept[-2] == "":
+        kept.pop()
+    s = "\n".join(kept)
+
+    readme.write_text(s, encoding="utf-8")
     print(f"refreshed {len(rows)} repositories on {today}")
     return 0
 

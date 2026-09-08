@@ -2813,16 +2813,16 @@
     "as_of": "2026-09-08"
    },
    "sciglyph": {
-    "last_month": 690,
-    "as_of": "2026-09-04"
+    "last_month": 717,
+    "as_of": "2026-09-08"
    },
    "scholarcheck": {
     "last_month": 591,
     "as_of": "2026-09-07"
    },
    "docxaudit": {
-    "last_month": 681,
-    "as_of": "2026-09-04"
+    "last_month": 698,
+    "as_of": "2026-09-08"
    }
   },
   "pypi_source": "GET https://pypistats.org/api/packages/{pkg}/recent - public, anyone can re-run it"
