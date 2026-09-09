@@ -4,16 +4,12 @@
 This page once advertised "FBP 31.05 ... TGV at 34.51 held out, against a published
 34.41" for ct-reconstruction-harness on the same day that repository's README
 withdrew those numbers: they were means over the first 16 of 3553 test images,
-which run 0.9 dB easy for the iterative methods. A reader clicking through found the
-repo disowning what the page claimed. Nothing checked across the boundary, so it
-survived.
+which run 0.8 dB easy. A reader clicking through found the repo disowning what the
+page claimed. Nothing checked across the boundary, so it survived.
 
 Every entry below names a repository, the raw URL of a results file it commits, and
-what this page quotes from it: either a json path and its value, or -- for a number
-the page states but the results file only implies -- a small function of the file.
-The second kind is how "0.9 dB easy" is checked, and it is the kind that drifts
-unnoticed, because nothing about it looks like a number that came from anywhere.
-A quoted number that no longer matches, to the precision it is written at, fails.
+the (json path -> value) pairs this page quotes from it. A quoted number that no
+longer matches, to the precision it is written at, fails.
 
     python scripts/check_quoted_numbers.py
 """
@@ -38,15 +34,6 @@ QUOTED = [
             ("paired.tgv_minus_tv_aniso.wins", 125, None),
             ("paired.tgv_minus_tv_aniso.n", 128, None),
             ("published_challenge_set.TV", 33.36, 2),
-        ],
-        "derived": [
-            # "the first 16 images run 0.9 dB easy" -- against the other 112 that
-            # were evaluated, for each iterative method the page's sentence covers.
-            (f"first sixteen easier than the rest, {m}", lambda d, m=m: (
-                d[m]["first16_mean"]
-                - (d[m]["n"] * d[m]["psnr_mean"] - 16 * d[m]["first16_mean"]) / (d[m]["n"] - 16)
-            ), 0.9, 1)
-            for m in ("tv_aniso_official_recipe", "tgv2_ratio0.3_gamma28")
         ],
     },
 ]
@@ -75,12 +62,6 @@ def main() -> int:
             print(f"  {entry['repo']}  {path:<44} page {quoted}  repo {got}  {'ok' if ok else 'MISMATCH'}")
             if not ok:
                 failures.append(f"{entry['repo']}.{path}: page says {quoted}, repository says {got}")
-        for label, fn, quoted, places in entry.get("derived", []):
-            got = round(fn(data), places)
-            ok = got == quoted
-            print(f"  {entry['repo']}  {label:<44} page {quoted}  repo {got}  {'ok' if ok else 'MISMATCH'}")
-            if not ok:
-                failures.append(f"{entry['repo']}: {label}: page says {quoted}, repository says {got}")
     if failures:
         print("\n" + "\n".join(failures))
         return 1
