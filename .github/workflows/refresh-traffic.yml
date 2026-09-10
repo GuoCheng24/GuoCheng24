@@ -33,6 +33,15 @@ jobs:
           python-version: "3.12"
       - run: python scripts/check_quoted_numbers.py
 
+      # The other half of the page describes what other people did with the work:
+      # merged, open, closed. That state lives in their repositories and changes
+      # without telling me. GITHUB_TOKEN is the automatic one, used only to raise
+      # the anonymous rate limit on public reads.
+      - name: claims about other people's repositories still hold
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/check_upstream_state.py
+
   refresh:
     if: github.event_name != 'push'
     runs-on: ubuntu-latest
