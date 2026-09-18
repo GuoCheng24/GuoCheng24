@@ -1,84 +1,68 @@
 ## Guo Cheng
 
-Medical imaging, inverse problems, and the evaluation of AI systems. I work at both ends — the
-applied mathematics and the code that checks whether it survived contact with data. Most of what is public here is a
-harness: something built to prove its own headline number wrong, which says so in the README
-when it succeeds. The methods work sits mainly in unreleased repositories; what you can read
-below is the part I can show.
+**RL post-training infrastructure — the numerics and evaluation integrity of GRPO-style training.** I find
+the numbers that stopped meaning what they say, in vLLM, TRL, verl and my own harnesses, and fix the ones I
+can reach. Background: inverse problems and medical-imaging AI at the University of Chinese Academy of
+Sciences, which is where the habit of measuring the ceiling before building the method comes from.
 
-Recent examples of that working: on TopCoW a *random* assignment of fragments cut the break rate as much
-as the repairs I had built, so [topocheck](https://github.com/GuoCheng24/topocheck) ships that baseline as
-one of its five checks — if your repair does not beat random, it prints `beats random: False`;
-and a reproduction of an official CT pipeline needed seven undocumented layers before its number
-matched, each one written down in
-[DEBUGGING.md](https://github.com/GuoCheng24/ct-reconstruction-harness/blob/main/DEBUGGING.md).
+- [huggingface/trl#7269](https://github.com/huggingface/trl/pull/7269) (open): removes the truncated-support term from GRPO's vLLM
+  importance-sampling ratio — **0.896 → 1.001** at `top_p=0.8` for an unchanged policy, and the logged
+  mismatch **0.043 → 0.007** in a real colocated run.
+- [vllm-project/vllm#55634](https://github.com/vllm-project/vllm/issues/55634): an aborted request's prefill leaks into `prompt_tokens_total`;
+  **two contributors opened fixes the next day**, one [approved by a maintainer](https://github.com/vllm-project/vllm/pull/55940).
+- **Four of the pull requests are merged**, two of them code fixes in [MLEvolve](https://github.com/InternScience/MLEvolve)
+  (#1 on MLE-bench). Four packages on PyPI, **about 2,300 installs a month**
+  ([pypistats](https://pypistats.org/packages/scholarcheck), read 2026-09-18).
+- [batch-logprob-gap](https://github.com/GuoCheng24/batch-logprob-gap): bf16 batch-shape noise measured on eight models, fp16 shown
+  to remove it, and a six-arm, two-seed GRPO run bounding its effect on reward at about a point.
+
+Open to research-engineering work on RL post-training infrastructure — chengguo24@mails.ucas.ac.cn.
 
 ### Contributions to other people's projects
 
-Found by reading someone else's source, each submitted with a reproduction and a before/after
-table. Four of the pull requests are merged. The vLLM entries are questions and measurements
-rather than patches — two issues of my own, and measurements posted onto other people's threads in vLLM, verl and TRL
-— and they have so far produced two fix pull requests written by other people, one of which is approved.
-
-Most of them are one defect. A system keeps running while a number inside it quietly stops
-meaning what it says: a leakage guard that compares floats with `==`, so the 117 lines behind it
-never execute; an aborted request whose tokens land in one family of counters and not the other,
-so two billing gateways disagree by exactly the prefill a client abandoned; a regression gate
-whose tolerance sits 8.9 standard errors below its own baseline, so a five-point accuracy drop
-passes it 99.5% of the time. Nothing raises, nothing is red, and the number is wrong. That is
-also what the repositories below are built to catch, which is why I keep finding it.
+Each found by reading the source, each submitted with a reproduction and a before/after table. Four of the
+pull requests are merged. The recurring defect: a system keeps running while a number inside it quietly
+stops meaning what it says — nothing raises, nothing is red, and the number is wrong.
 
 | Where | What | Status |
 |---|---|---|
-| [vllm-project/vllm](https://github.com/vllm-project/vllm) — the inference engine most open LLM serving runs on, 91k stars | [#55634](https://github.com/vllm-project/vllm/issues/55634) an aborted request adds its prefill to `vllm:prompt_tokens_total` — +3010 across five client-side aborts — while every per-request histogram and the success counter stay at exactly zero, so a gateway billing from one family and a gateway billing from the other disagree by the whole prefill of every abandoned request. Traced to `OutputProcessor.abort_requests()` never reaching `_update_stats_from_finished()`; reproduced twice three days apart, then again on v0.28.0 · [#56361](https://github.com/vllm-project/vllm/issues/56361) at `n>1` eleven per-request metrics count each child and two count the user's request, so two of vLLM's own counters disagree about how many requests finished. A contributor offered to fix it and asked which level was intended, so I measured the part that does not depend on the answer: a 311-token prompt at `n=8` adds **2488** to `prompt_tokens_total` for **360** tokens of prefill actually computed — wrong under the work reading and wrong under the billing reading, since `usage` reports 311. `computed + cache_hits == total` holds exactly in all sixteen cells · measurements posted onto two threads opened by other people: [#46530](https://github.com/vllm-project/vllm/pull/46530#issuecomment-5628808054) the batch-invariance CI gate carries `@pytest.mark.flaky(reruns=3)`, which drops the chance of reporting a violation that appears in 10% of trials from 41% to **2.8%**, measured against the test's own parameters and anchored by 60 clean trials on an intact build and 40 of 40 on a deliberately broken one; and [#34333](https://github.com/vllm-project/vllm/issues/34333), an RFC by another contributor, where the GSM8K regression gate's one-sided tolerance sits **8.9 binomial standard errors** below its own baseline — median power against a true five-point regression **0.54%**, 43 of 53 configs under 5%, while a paired McNemar test reaches ~97% on the same GPU time — [script and per-config output](https://gist.github.com/GuoCheng24/c31d9c5c98794dc69415f0b160ba41e1) | **two contributors opened fixes the next day** ([#55837](https://github.com/vllm-project/vllm/pull/55837), [#55940](https://github.com/vllm-project/vllm/pull/55940) now +463/−76 across nine files, approved by a maintainer and awaiting a smaller diff); the parallel-sampling and determinism threads are open; [#56923](https://github.com/vllm-project/vllm/pull/56923) fixes the two HELP strings and the design-doc line so `prompt_tokens_total` says what it counts (open) |
-| [huggingface/trl](https://github.com/huggingface/trl) — the post-training library, 19k stars | [#6789](https://github.com/huggingface/trl/issues/6789#issuecomment-5710417477) is a maintainer's analysis of how top-p/top-k truncation biases GRPO's vLLM importance-sampling ratio, and it states that the defaults are safe because nothing is truncated. That is true of the truncation term and of the *mean* the trainer logs. Per token it is not: at `top_p=1.0` the same comparison has sd 0.05 and puts **7.5%** of tokens outside the clip band, and the trainer's own log-prob recomputation, chunked by `batch_size` in `grpo_trainer.py`, contributes 8.0% of that with no inference engine involved. The mean is zero to three decimals, which is why the metric that says "safe" says it. [#7269](https://github.com/huggingface/trl/pull/7269) then removes the truncation term itself: with `top_p=0.8` the ratio averages 0.896 for an unchanged policy because vLLM normalises its log-probs over the kept tokens while the trainer normalises over the vocabulary; the pull request asks vLLM for the kept token ids it can now replay (`return_sampling_mask`) and normalises the trainer's old log-probs over the same set, which brings the ratio to 1.001 offline and the logged mismatch from 0.043 to 0.007 in a real colocated run | qualification posted; pull request open, tests and an end-to-end vLLM run included |
-| [verl-project/verl](https://github.com/verl-project/verl) — the RL post-training framework behind most open GRPO runs, 23k stars | [#6280](https://github.com/verl-project/verl/issues/6280#issuecomment-5709899398) had asked since May whether the on-policy `old_log_prob` / `log_prob` mismatch is caused by kernels that are not batch-invariant, with one contributor unable to reproduce it. I measured it on eight models: in bfloat16 a trainer gives the same token a different log probability depending only on its batch shape, moving the importance ratio out of `[0.9, 1.1]` for **1.8% to 60.0%** of tokens; fp32 is 0.00% on every model, repeating the same batch is bit-exact, equal-length no-padding batches behave the same, eight copies of one sequence differ from that sequence alone, and only the MoE changes when the batch is merely regrouped (12.60%) — which matches the thread's own report that it appeared on Qwen3.5-35B-A3B and not on dense models. PPO clipping does not absorb it: the clipped *fraction* holds while *which* tokens are clipped flips 1.7% to 10.1%. The one configuration that reported zero uses flash-attn varlen, which is the one thing this harness cannot build, and the reply says so | measurement posted; the varlen check is the open variable |
-| [odlgroup/odl](https://github.com/odlgroup/odl) — operator discretization library, 433 stars, 1.0 shipped | [#1730](https://github.com/odlgroup/odl/pull/1730) ASTRA's non-vector `parallel` geometry has no slot for a detector position, so in 2d parallel beam a shifted detector was silently discarded — [issue #359](https://github.com/odlgroup/odl/issues/359), open since 2016, and by now the CUDA and CPU backends disagreed on the same geometry with no warning. Found by a guard that requires every mismatch axis to change the sinogram; it changed it by exactly 0.0. Regression test fails on the unpatched code with the two sinograms bit-identical | open, maintainer review addressed |
-| [InternScience/MLEvolve](https://github.com/InternScience/MLEvolve) — the agent that competes on MLE-bench | [#8](https://github.com/InternScience/MLEvolve/pull/8) a data-leakage guard, on by default, compared floats with `==` — so the 117 lines behind it had never once run · [#9](https://github.com/InternScience/MLEvolve/pull/9) the memory block sorted minimise-metrics backwards, so the model was shown the worst sibling and told it was the best | **both merged**, and now [third contributor](https://github.com/InternScience/MLEvolve/graphs/contributors) |
-| [github/awesome-copilot](https://github.com/github/awesome-copilot) — GitHub's own collection | [#2854](https://github.com/github/awesome-copilot/pull/2854) [`research-harness-engineer`](https://github.com/github/awesome-copilot/blob/main/agents/research-harness-engineer.agent.md), an agent definition for running research as a falsification loop · [#2938](https://github.com/github/awesome-copilot/pull/2938) one row of their contributor table carried eight cells at `width="14.28%"` each, so the last avatar overflowed the table and rendered narrower than the rest | **both merged**, and on the [contributor wall](https://github.com/github/awesome-copilot#contributors-) |
-| [InternScience/InternAgent](https://github.com/InternScience/InternAgent) | [#27](https://github.com/InternScience/InternAgent/pull/27) a task was configured to *maximise* test-set MSE, so a worse error scored as progress and was rewarded. One character | open |
-| [ResearAI/DeepScientist](https://github.com/ResearAI/DeepScientist) | [#110](https://github.com/ResearAI/DeepScientist/pull/110) `pytest` aborted collection on a clean checkout — 56 test files lost to one undeclared optional import, in a repository whose CONTRIBUTING tells you to run exactly that | open |
-
+| [vllm-project/vllm](https://github.com/vllm-project/vllm) — 91k stars | [#55634](https://github.com/vllm-project/vllm/issues/55634) an aborted request's prefill (+3,010 tokens over five aborts) lands in `prompt_tokens_total` while every per-request histogram stays at zero, so two billing gateways disagree by exactly the abandoned prefill · [#56361](https://github.com/vllm-project/vllm/issues/56361) at `n>1` eleven per-request metrics count the children and two count the request: a 311-token prompt at `n=8` adds **2,488** to `prompt_tokens_total` for **360** tokens of prefill · [#46530](https://github.com/vllm-project/vllm/pull/46530#issuecomment-5628808054) a `flaky(reruns=3)` on the batch-invariance gate cuts a 41% chance of reporting a violation to **2.8%** · [#34333](https://github.com/vllm-project/vllm/issues/34333) a GSM8K regression gate **8.9 standard errors** below its own baseline passes a five-point drop 99.5% of the time ([script](https://gist.github.com/GuoCheng24/c31d9c5c98794dc69415f0b160ba41e1)) | fixes by two other contributors ([#55837](https://github.com/vllm-project/vllm/pull/55837), [#55940](https://github.com/vllm-project/vllm/pull/55940) approved, +463/−76); [#56923](https://github.com/vllm-project/vllm/pull/56923) mine, open |
+| [huggingface/trl](https://github.com/huggingface/trl) — 19k stars | [#6789](https://github.com/huggingface/trl/issues/6789#issuecomment-5710417477) the defaults are safe for the truncation term but not per token: **7.5%** of tokens leave the clip band at `top_p=1.0`, and 8.0% of that is the trainer's own chunking · [#7269](https://github.com/huggingface/trl/pull/7269) normalises the trainer's old log-probs over vLLM's replayed sampling support (`return_sampling_mask`), ratio **0.896 → 1.001** | qualification posted; pull request open, with tests and an end-to-end vLLM run |
+| [verl-project/verl](https://github.com/verl-project/verl) — 23k stars | [#6280](https://github.com/verl-project/verl/issues/6280#issuecomment-5709899398) the four-month question — is the on-policy log-prob mismatch a batch-invariance problem — measured on eight models: **1.8% to 60.0%** of ratios leave `[0.9, 1.1]` in bf16, 0.00% in fp32, and only the MoE moves when the batch is merely regrouped (12.60%); PPO's clipped *fraction* holds while *which* tokens are clipped flips 1.7% to 10.1% | measurement posted; flash-attn varlen is the one path it cannot test |
+| [odlgroup/odl](https://github.com/odlgroup/odl) — 433 stars | [#1730](https://github.com/odlgroup/odl/pull/1730) ASTRA's 2d parallel geometry silently dropped a shifted detector ([#359](https://github.com/odlgroup/odl/issues/359), open since 2016); found by a guard that requires every mismatch axis to change the sinogram — it changed it by 0.0 | open, review addressed |
+| [InternScience/MLEvolve](https://github.com/InternScience/MLEvolve) — #1 on MLE-bench | [#8](https://github.com/InternScience/MLEvolve/pull/8) a default-on leakage guard compared floats with `==`, so its 117 lines had never run · [#9](https://github.com/InternScience/MLEvolve/pull/9) the memory block sorted minimise-metrics backwards | **both merged**, [third contributor](https://github.com/InternScience/MLEvolve/graphs/contributors) |
+| [github/awesome-copilot](https://github.com/github/awesome-copilot) | [#2854](https://github.com/github/awesome-copilot/pull/2854) [`research-harness-engineer`](https://github.com/github/awesome-copilot/blob/main/agents/research-harness-engineer.agent.md), an agent definition for research as a falsification loop · [#2938](https://github.com/github/awesome-copilot/pull/2938) a contributor-table row with one cell too many | **both merged**, on the [contributor wall](https://github.com/github/awesome-copilot#contributors-) |
+| [InternScience/InternAgent](https://github.com/InternScience/InternAgent) | [#27](https://github.com/InternScience/InternAgent/pull/27) a task *maximised* test-set MSE, so a worse error was rewarded — one character | open |
+| [ResearAI/DeepScientist](https://github.com/ResearAI/DeepScientist) | [#110](https://github.com/ResearAI/DeepScientist/pull/110) `pytest` aborted collection on a clean checkout, 56 test files lost to one undeclared import | open |
 
 ### Things I maintain
 
-| Project | What it does, and the number it stands on |
+**RL post-training and evaluation integrity**
+
+| Project | One sentence and the number it stands on |
 |---|---|
-| [breakthrough-harness](https://github.com/GuoCheng24/breakthrough-harness) | Make a research agent hard to fool. Adapters for nine stacks; every claim in the README is asserted by a test. Works with DeepSeek Harness with nothing to copy — its skill provider scans `.agents/skills`, which this repo already has. |
-| [ct-reconstruction-harness](https://github.com/GuoCheng24/ct-reconstruction-harness) | Reproduce the LoDoPaB-CT baselines from scratch, then beat one with a paired test: the matched TV recipe is 33.00 ± 0.33 against a published 33.36, and a generate-and-select loop finds TGV ratio 0.3 at +0.70 ± 0.04 dB over it, paired on the same 128 held-out images, winning 125 of them. Its first table quoted the first 16 images, which run 0.9 dB easy for the iterative methods; the README now says so and withdraws the claim that rested on them. Every guard is run against a deliberately broken operator, and one of them found the ODL bug above. |
-| [ifeval-reproduction](https://github.com/GuoCheng24/ifeval-reproduction) | Reproducing a published IFEval score on one shared GPU. Three arms and a pre-registration chain that CI re-hashes on every push. The third arm looked like an 11-point gain from thinking mode until the paired test showed the first arm scores the same on those same prompts — the subsample was easier. |
-| [taichu-eval-reproduction](https://github.com/GuoCheng24/taichu-eval-reproduction) | Re-measuring two model-card numbers of ZDTaichu5.0-9B (a Qwen3.5 GatedDeltaNet hybrid with a C-RADIO vision tower) on one RTX 4090. Both hold on the card's protocol, thinking on and an LLM answer extractor: CV-Bench 89.3% [83.4, 93.3] on 150 items against 86.82, MathVista 82.0% [73.3, 88.3] on 100 items against 84.50. Off that protocol they do not (82.4% on all of CV-Bench with thinking off, 73.2% on all of MathVista with a 2,048-token budget), and every per-item record is in the repository. |
-| [batch-logprob-gap](https://github.com/GuoCheng24/batch-logprob-gap) | In bfloat16 a trainer assigns a token a different probability depending on how many sequences share its batch: 1.8% to 60.0% of importance ratios leave `[0.9, 1.1]` across eight models, 0.00% in fp32. The noise enters where the architecture puts it (the last third of the stack for GPT-NeoX, the first five layers for Qwen2 and Qwen3); scoring in fp16 removes it at bf16 cost on every Qwen-family model; and six ways of computing GRPO's old log-probabilities, on two seeds, finish within 0.013 of each other at 1.5B, so at that scale it does not reach the reward. Every table is regenerated from the JSON; the README lists the three explanations of mine that the controls killed, and the one production path it cannot test. |
-| [topocheck](https://github.com/GuoCheng24/topocheck) [![](https://img.shields.io/pypi/v/topocheck?label=PyPI&color=0b6e4f)](https://pypi.org/project/topocheck/) | Five checks for topology-aware segmentation claims — including the random-repair baseline that beat every learned repair I tried. |
-| [scholarcheck](https://pypi.org/project/scholarcheck/) [![](https://img.shields.io/pypi/v/scholarcheck?label=PyPI&color=0b6e4f)](https://pypi.org/project/scholarcheck/) · [sciglyph](https://pypi.org/project/sciglyph/) [![](https://img.shields.io/pypi/v/sciglyph?label=PyPI&color=0b6e4f)](https://pypi.org/project/sciglyph/) · [docxaudit](https://pypi.org/project/docxaudit/) [![](https://img.shields.io/pypi/v/docxaudit?label=PyPI&color=0b6e4f)](https://pypi.org/project/docxaudit/) | On PyPI, and installed by people I have never met. Verify citations before a reviewer does; publication figures that check their own layout; find what a converter silently dropped. |
-| [worldmodel-from-scratch](https://github.com/GuoCheng24/worldmodel-from-scratch) | Build a world model in an afternoon, then measure where it breaks. The README separates claims that hold on any machine from those that do not, and CI checks only the first kind. |
-| [world-model-map](https://github.com/GuoCheng24/world-model-map) | A researcher's map of open-source world models — what each one actually claims, what its authors say it cannot do, and an evidence grade per entry. CI re-resolves every citation. |
-| [kakeya-conjecture-lab](https://github.com/GuoCheng24/kakeya-conjecture-lab) | An interactive lab for the Kakeya conjecture. The dimension meter recomputes its own numbers in the test suite, so the page cannot drift from the mathematics. |
+| [batch-logprob-gap](https://github.com/GuoCheng24/batch-logprob-gap) | In bf16 a trainer gives the same token a different log probability depending on its batch shape: **1.8% to 60.0%** of importance ratios leave `[0.9, 1.1]` across eight models, 0.00% in fp32; fp16 scoring removes it; six GRPO arms on two seeds finish within 0.013 of each other. Every table is regenerated from the JSON. |
+| [breakthrough-harness](https://github.com/GuoCheng24/breakthrough-harness) | Make a research agent hard to fool: adapters for nine stacks, every README claim asserted by a test; works with DeepSeek Harness as is. |
+| [ifeval-reproduction](https://github.com/GuoCheng24/ifeval-reproduction) | A published IFEval score on one shared GPU, three arms, a pre-registration chain CI re-hashes on every push; the "11-point gain" of the third arm died to a paired test — the subsample was easier. |
+| [taichu-eval-reproduction](https://github.com/GuoCheng24/taichu-eval-reproduction) | Two ZDTaichu5.0-9B model-card numbers re-measured on one RTX 4090: CV-Bench **89.3%** [83.4, 93.3] on 150 items against 86.82 and MathVista **82.0%** [73.3, 88.3] on 100 items against 84.50 on the card's protocol (thinking on, LLM answer extraction); 82.4% and 73.2% on the full sets off it. |
+
+**Inverse problems, world models, tools**
+
+| Project | One sentence and the number it stands on |
+|---|---|
+| [ct-reconstruction-harness](https://github.com/GuoCheng24/ct-reconstruction-harness) | LoDoPaB-CT baselines from scratch: matched TV **33.00 ± 0.33** against a published 33.36, TGV at **+0.70 ± 0.04 dB** over it on 128 held-out images (125 wins); its first table quoted 16 images that run 0.9 dB easy, and the README withdraws what rested on them; the seven undocumented layers the reproduction needed are each written down in [DEBUGGING.md](https://github.com/GuoCheng24/ct-reconstruction-harness/blob/main/DEBUGGING.md). |
+| [topocheck](https://github.com/GuoCheng24/topocheck) [![](https://img.shields.io/pypi/v/topocheck?label=PyPI&color=0b6e4f)](https://pypi.org/project/topocheck/) | Five checks for topology-aware segmentation claims, including the random-repair baseline that beat every learned repair I tried. |
+| [worldmodel-from-scratch](https://github.com/GuoCheng24/worldmodel-from-scratch) | A world model in an afternoon, then where it breaks; CI checks only the claims that hold on any machine. |
+| [world-model-map](https://github.com/GuoCheng24/world-model-map) | A researcher's map of open-source world models — what each claims, what its authors say it cannot do, an evidence grade per entry; CI re-resolves every citation. |
+| [kakeya-conjecture-lab](https://github.com/GuoCheng24/kakeya-conjecture-lab) | An interactive Kakeya-conjecture lab whose dimension meter recomputes its own numbers in the test suite. |
+| [scholarcheck](https://pypi.org/project/scholarcheck/) [![](https://img.shields.io/pypi/v/scholarcheck?label=PyPI&color=0b6e4f)](https://pypi.org/project/scholarcheck/) · [sciglyph](https://pypi.org/project/sciglyph/) [![](https://img.shields.io/pypi/v/sciglyph?label=PyPI&color=0b6e4f)](https://pypi.org/project/sciglyph/) · [docxaudit](https://pypi.org/project/docxaudit/) [![](https://img.shields.io/pypi/v/docxaudit?label=PyPI&color=0b6e4f)](https://pypi.org/project/docxaudit/) | Verify citations before a reviewer does; figures that check their own layout; find what a converter silently dropped. On PyPI, installed by people I have never met. |
 
 ### Who actually uses this
 
-Stars are a poor signal at this size. The number that does not depend on trusting me is on
-PyPI: four packages, **about 2,200 installs a month between them**, and
-[pypistats](https://pypistats.org/packages/scholarcheck) is public — go and look. Clone traffic
-is below it because it needs a caveat first.
-
-**A correction I had to make to my own table.** GitHub counts every Actions checkout as a clone,
-and my CI runs on push. In the first version of this section, between 13% and 56% of each
-repository's "clones" were my own workflows. On the day I caught it, `worldmodel-from-scratch`
-showed 250 clones by 64 people, of which about 140 were CI; excluding them took that repository
-from 64 people to **5**, and reordered the table completely. Those two numbers are from the first
-snapshot and stay there — the table below moves as traffic accumulates, which is the point of
-keeping every snapshot rather than a current figure. The first column now counts only days on
-which **no workflow ran in that repository at all**, and the raw totals sit beside it so the size
-of the correction is visible instead of asserted.
-
-**You cannot re-run these yourself**, because the traffic endpoint is visible only to a repository's
-owner. So the raw API response — every day, with that day's CI-run count — is committed to
-[`data/traffic.json`](https://github.com/GuoCheng24/GuoCheng24/blob/main/data/traffic.json). Each badge is a live shields.io query against that file, not
-a picture of a number, and [its history](https://github.com/GuoCheng24/GuoCheng24/commits/main/data/traffic.json)
-shows the figures accumulating over time. The PyPI badges link to
-[pypistats.org](https://pypistats.org/packages/scholarcheck), which is public: **those four numbers
-you can check without me.**
+Stars are a poor signal at this size. The number that does not depend on trusting me is on PyPI —
+**about 2,300 installs a month across four packages** (2026-09-18) — and clone traffic is below, with
+my own CI checkouts excluded: the first version of this table counted them as people, and the
+correction, with the raw API responses, is in [MEASUREMENT.md](MEASUREMENT.md).
 
 | Repository | People who cloned it, CI excluded (2026-09-08) | Raw total | PyPI / month |
 |---|---|---|---|
@@ -97,23 +81,12 @@ you can check without me.**
 
 ### Work that is not public yet
 
-Most of the methods work is in unreleased repositories, because a paper or a filing is still open.
-It is described only in outline: an idea in submission is easy to take and hard to get back. This
-section exists so the public half of the page is not mistaken for the whole of it.
-
-Four lines are open at the moment. Between them they cover guarantees for medical image
-segmentation, what a pre-treatment image can and cannot establish about a treatment decision, image
-synthesis for adaptive radiotherapy, and prognostic markers in functional imaging. One has a patent
-filed against it; two are with reviewers; one is written and held.
-
-What they have in common is the part I would rather be judged on than the individual results: each
-began with a measured ceiling and a random baseline before any method was built, each carries a
-shuffled or permuted control wherever one is definable, and each has a written record of the
-attempts that did not survive those checks. Several lines were closed on exactly that basis, which
-is why there are four here rather than a dozen.
-
-Happy to go into any of it properly in a conversation.
-
+Most of the methods work is in unreleased repositories because a paper or a filing is still open: four
+lines on guarantees for medical image segmentation, what a pre-treatment image can establish about a
+treatment decision, image synthesis for adaptive radiotherapy, and prognostic markers in functional
+imaging — one patented, two with reviewers, one written and held. Each began with a measured ceiling
+and a random baseline before any method was built, and each keeps a written record of the attempts
+that did not survive those checks. Happy to go into any of it properly in a conversation.
 
 ### How I work
 
