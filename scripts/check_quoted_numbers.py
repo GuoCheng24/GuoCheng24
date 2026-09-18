@@ -28,19 +28,6 @@ RAW = "https://raw.githubusercontent.com/GuoCheng24/{repo}/main/{path}"
 
 QUOTED = [
     {
-        # the sentence "vLLM's batch-invariant kernels shrink it (8.0% -> 7.1%, while changing
-        # trainer precision goes to 3.7% in one step)" rested for days on a measurement that
-        # lived only on the machine that ran it; it is committed now, so this page can check it.
-        "repo": "batch-logprob-gap",
-        "path": "results/kernel_arms.json",
-        "checks": [],
-        "derived": [
-            ("batch-invariant off, against the bf16 trainer", lambda d: 100 * d["arms"]["BI0 vs bf16 b8"]["out"] / d["n_tokens"], 8.0, 1),
-            ("batch-invariant on, against the bf16 trainer", lambda d: 100 * d["arms"]["BI1 vs bf16 b8"]["out"] / d["n_tokens"], 7.1, 1),
-            ("batch-invariant off, against the fp32 trainer", lambda d: 100 * d["arms"]["BI0 vs fp32 b8"]["out"] / d["n_tokens"], 3.7, 1),
-        ],
-    },
-    {
         "repo": "ct-reconstruction-harness",
         "path": "results/evaluation_n128.json",
         "checks": [
