@@ -40,6 +40,7 @@ CLAIMS = [
     ("github/awesome-copilot", 2938, "pulls", "merged"),
     ("InternScience/InternAgent", 27, "pulls", "open"),
     ("ResearAI/DeepScientist", 110, "pulls", "open"),
+    ("huggingface/trl", 7269, "pulls", "open"),
 ]
 
 MERGED_CLAIMED_IN_PROSE = 4     # "Four of the pull requests are merged"
