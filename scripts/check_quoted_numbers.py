@@ -28,6 +28,20 @@ RAW = "https://raw.githubusercontent.com/GuoCheng24/{repo}/main/{path}"
 
 QUOTED = [
     {
+        # The two figures this page quotes from TRL #6789 come from one run that rescored the same
+        # 3,916 tokens under each setting. It lived only on the machine that produced it until an
+        # audit of this page asked where it was; the repository commits it now, so this can check it.
+        "repo": "batch-logprob-gap",
+        "path": "results/kernel_arms.json",
+        "checks": [],
+        "derived": [
+            ("vLLM logprobs against the bf16 trainer",
+             lambda d: 100 * d["arms"]["gen vs bf16 b8"]["out"] / d["n_tokens"], 7.5, 1),
+            ("the trainer's own chunking, no engine",
+             lambda d: 100 * d["arms"]["bf16 b1 vs b8"]["out"] / d["n_tokens"], 8.0, 1),
+        ],
+    },
+    {
         "repo": "ct-reconstruction-harness",
         "path": "results/evaluation_n128.json",
         "checks": [
