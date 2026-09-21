@@ -88,6 +88,8 @@ imaging — one patented, two with reviewers, one written and held. Each began w
 and a random baseline before any method was built, and each keeps a written record of the attempts
 that did not survive those checks. Happy to go into any of it properly in a conversation.
 
+*Last verified against the API on the date above; this page could not re-check them today because no traffic token is configured.*
+
 ### How I work
 
 Numbers go to disk before sentences are written about them. Every guard is run against a
