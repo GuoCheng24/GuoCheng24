@@ -40,7 +40,7 @@ CLAIMS = [
     ("github/awesome-copilot", 2938, "pulls", "merged"),
     ("InternScience/InternAgent", 27, "pulls", "open"),
     ("ResearAI/DeepScientist", 110, "pulls", "open"),
-    ("huggingface/trl", 7269, "pulls", "open"),
+    ("huggingface/trl", 7269, "pulls", "closed"),
 ]
 
 MERGED_CLAIMED_IN_PROSE = 4     # "Four of the pull requests are merged"
@@ -61,6 +61,15 @@ def actual_state(repo, num, kind):
     if kind == "pulls" and d.get("merged_at"):
         return "merged"
     return d["state"]
+
+
+def annotated_state(readme, repo, num, kind):
+    """The state the page writes in parentheses immediately after the link, if it writes one."""
+    link = re.escape(
+        f"https://github.com/{repo}/{'pull' if kind == 'pulls' else 'issues'}/{num}"
+    )
+    m = re.search(link + r"[^)]*\)\s*\((open|closed|merged)\b[^)]*\)", readme, re.I)
+    return m.group(1).lower() if m else None
 
 
 def main() -> int:
@@ -88,6 +97,18 @@ def main() -> int:
         # the page must actually link what it claims
         if f"/{repo}/{'pull' if kind == 'pulls' else 'issues'}/{num}" not in readme:
             failures.append(f"{repo}#{num}: state is claimed but the page does not link it")
+
+        # ...and where the page writes the state itself, it must be the same state.
+        # Until now this loop compared CLAIMS against upstream and never looked at the
+        # prose, so trl#7269 could read "(open)" on the page with "closed" in the table
+        # and every check would pass. Only the parenthesised annotation right after a
+        # link is read: the Status column phrases things too freely to match on, and a
+        # window around the link picks up the next entry's word in a dense table row.
+        shown = annotated_state(readme, repo, num, kind)
+        if shown is not None and shown != got:
+            failures.append(
+                f"{repo}#{num}: the page writes '({shown})' after the link, upstream says {got}"
+            )
 
     print(f"\n  merged pull requests: {merged}; the prose says {MERGED_CLAIMED_IN_PROSE}")
     if merged != MERGED_CLAIMED_IN_PROSE:
