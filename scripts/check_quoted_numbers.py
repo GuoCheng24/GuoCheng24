@@ -59,6 +59,28 @@ QUOTED = [
         "derived": [],
     },
     {
+        # doubleblind's row quotes counts over its own ledger, and a ledger grows
+        # while the prose about it does not. Both files live in that repository,
+        # so this checks across the boundary the way the rows above do.
+        "repo": "doubleblind",
+        "path": "ledger/findings.json",
+        "checks": [
+            ("context.fresh_eyes_run_1.guard_checks_before", 37, None,
+             "already passed **{}** mechanical checks"),
+            ("context.fresh_eyes_run_1.findings_verified", 5, None,
+             "of the **{}** that survived verification"),
+        ],
+        "derived": [
+            ("defects recorded in the ledger",
+             lambda d: len(d["findings"]), 19, None, "ledger of **{}** real defects"),
+            ("verified fresh-eyes findings that were correct numbers in false sentences",
+             lambda d: sum(1 for f in d["findings"]
+                           if f.get("source") == "fresh-eyes-run-1"
+                           and f["category"] == "correct-number-false-sentence"), 4, None,
+             "findings; **{}** of the"),
+        ],
+    },
+    {
         "repo": "ct-reconstruction-harness",
         "path": "results/evaluation_n128.json",
         "checks": [
@@ -92,7 +114,21 @@ def dig(d, path):
 README = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "README.md")
 
 
-def on_page(quoted, readme, places=None):
+def _pad(t, n):
+    """A check may end with an optional phrase the number must sit in; pad when it does not.
+
+    `checks` rows are (path, quoted, places[, near]) and `derived` rows are
+    (label, fn, quoted, places[, near]), so the target length differs and is
+    passed in rather than guessed from what happens to be there.
+    """
+    if len(t) == n:
+        return t
+    if len(t) == n - 1:
+        return (*t, None)
+    raise ValueError(f"check row has {len(t)} fields, expected {n - 1} or {n}: {t!r}")
+
+
+def on_page(quoted, readme, places=None, near=None):
     """Is the figure, as this table writes it, actually on the page?
 
     Until this existed the loop compared the table above against the repository and never
@@ -105,6 +141,13 @@ def on_page(quoted, readme, places=None):
         return f"[{', '.join(str(x) for x in quoted)}]" in readme
     # written at the precision the table declares: 77.20 is "77.20" on the page, not "77.2"
     text = f"{quoted:.{places}f}" if places is not None and isinstance(quoted, float) else str(quoted)
+    # A small whole number is on almost every page somewhere. Deleting "a ledger
+    # of 19 real defects" left on_page(19) true, because 19 appears elsewhere -
+    # so a check may name the phrase the number has to sit in, and then only
+    # that occurrence counts.
+    if near is not None:
+        return re.search(re.escape(near).replace(re.escape("{}"), re.escape(text)),
+                         readme) is not None
     return re.search(r"(?<![\d.])" + re.escape(text) + r"(?![\d])", readme) is not None
 
 
@@ -120,23 +163,23 @@ def main() -> int:
         except Exception as exc:                       # noqa: BLE001
             print(f"  {entry['repo']}: could not fetch {entry['path']}: {exc}")
             return 0 if os.environ.get("ALLOW_OFFLINE") else 1
-        for path, quoted, places in entry["checks"]:
+        for path, quoted, places, near in (_pad(t, 4) for t in entry["checks"]):
             actual = dig(data, path)
             got = round(actual, places) if places is not None else actual
-            ok = got == quoted and on_page(quoted, readme, places)
+            ok = got == quoted and on_page(quoted, readme, places, near)
             state = "ok" if ok else ("MISMATCH" if got != quoted else "NOT ON PAGE")
             print(f"  {entry['repo']}  {path:<44} page {quoted}  repo {got}  {state}")
             if not ok:
                 failures.append(f"{entry['repo']}.{path}: table says {quoted}, repository says {got}, "
-                                f"on page: {on_page(quoted, readme, places)}")
-        for label, fn, quoted, places in entry.get("derived", []):
+                                f"on page: {on_page(quoted, readme, places, near)}")
+        for label, fn, quoted, places, near in (_pad(t, 5) for t in entry.get("derived", [])):
             got = round(fn(data), places)
-            ok = got == quoted and on_page(quoted, readme, places)
+            ok = got == quoted and on_page(quoted, readme, places, near)
             state = "ok" if ok else ("MISMATCH" if got != quoted else "NOT ON PAGE")
             print(f"  {entry['repo']}  {label:<44} page {quoted}  repo {got}  {state}")
             if not ok:
                 failures.append(f"{entry['repo']}: {label}: table says {quoted}, repository says {got}, "
-                                f"on page: {on_page(quoted, readme, places)}")
+                                f"on page: {on_page(quoted, readme, places, near)}")
     if failures:
         print("\n" + "\n".join(failures))
         return 1
