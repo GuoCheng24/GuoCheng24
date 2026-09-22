@@ -72,12 +72,23 @@ QUOTED = [
         ],
         "derived": [
             ("defects recorded in the ledger",
-             lambda d: len(d["findings"]), 19, None, "ledger of **{}** real defects"),
+             lambda d: len(d["findings"]), 20, None, "ledger of **{}** real defects"),
             ("verified fresh-eyes findings that were correct numbers in false sentences",
              lambda d: sum(1 for f in d["findings"]
                            if f.get("source") == "fresh-eyes-run-1"
                            and f["category"] == "correct-number-false-sentence"), 4, None,
              "findings; **{}** of the"),
+        ],
+    },
+    {
+        # groundwork's row quotes counts over its own archive and skill tree; both
+        # grow while the prose about them does not.
+        "repo": "groundwork",
+        "path": "archive/causes-of-death.json",
+        "checks": [],
+        "derived": [
+            ("ways a direction dies", lambda d: len(d["causes"]), 10, None,
+             "archive of **{}** ways a"),
         ],
     },
     {
