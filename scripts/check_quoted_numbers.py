@@ -42,6 +42,23 @@ QUOTED = [
         ],
     },
     {
+        # This page once quoted taichu's "82.0% [73.3, 88.3] contains 84.50" as a reproduction.
+        # The repository then measured its own subset: 5.33 points easier than the rest of the
+        # benchmark, which is the ifeval lesson repeated. The page now quotes the projected
+        # full-set figures and the subset gap, all from the file that derives them.
+        "repo": "taichu-eval-reproduction",
+        "path": "results/representativeness.json",
+        "checks": [
+            ("cvbench.projected_on", 88.45, 2),
+            ("cvbench.projected_on_ci", [82.6, 94.3], None),
+            ("mathvista.projected_on", 77.20, 2),
+            ("mathvista.projected_on_ci", [68.9, 85.5], None),
+            ("mathvista.subset_easier_by", 5.33, 2),
+            ("mathvista.n_rest", 900, None),
+        ],
+        "derived": [],
+    },
+    {
         "repo": "ct-reconstruction-harness",
         "path": "results/evaluation_n128.json",
         "checks": [
@@ -72,8 +89,27 @@ def dig(d, path):
     return d
 
 
+README = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "README.md")
+
+
+def on_page(quoted, readme):
+    """Is the figure, as this table writes it, actually on the page?
+
+    Until this existed the loop compared the table above against the repository and never
+    opened README.md, so the page could say 88.40 while the table said 88.45 and both the
+    repository and the check agreed with the table. A number is matched with digit boundaries
+    ("5.33" must not be satisfied by "15.33"); a list is matched as the page writes it.
+    """
+    import re
+    if isinstance(quoted, list):
+        return f"[{', '.join(str(x) for x in quoted)}]" in readme
+    return re.search(r"(?<![\d.])" + re.escape(str(quoted)) + r"(?![\d])", readme) is not None
+
+
 def main() -> int:
     failures = []
+    with open(README, encoding="utf-8") as fh:
+        readme = fh.read()
     for entry in QUOTED:
         url = RAW.format(repo=entry["repo"], path=entry["path"])
         try:
@@ -85,16 +121,20 @@ def main() -> int:
         for path, quoted, places in entry["checks"]:
             actual = dig(data, path)
             got = round(actual, places) if places is not None else actual
-            ok = got == quoted
-            print(f"  {entry['repo']}  {path:<44} page {quoted}  repo {got}  {'ok' if ok else 'MISMATCH'}")
+            ok = got == quoted and on_page(quoted, readme)
+            state = "ok" if ok else ("MISMATCH" if got != quoted else "NOT ON PAGE")
+            print(f"  {entry['repo']}  {path:<44} page {quoted}  repo {got}  {state}")
             if not ok:
-                failures.append(f"{entry['repo']}.{path}: page says {quoted}, repository says {got}")
+                failures.append(f"{entry['repo']}.{path}: table says {quoted}, repository says {got}, "
+                                f"on page: {on_page(quoted, readme)}")
         for label, fn, quoted, places in entry.get("derived", []):
             got = round(fn(data), places)
-            ok = got == quoted
-            print(f"  {entry['repo']}  {label:<44} page {quoted}  repo {got}  {'ok' if ok else 'MISMATCH'}")
+            ok = got == quoted and on_page(quoted, readme)
+            state = "ok" if ok else ("MISMATCH" if got != quoted else "NOT ON PAGE")
+            print(f"  {entry['repo']}  {label:<44} page {quoted}  repo {got}  {state}")
             if not ok:
-                failures.append(f"{entry['repo']}: {label}: page says {quoted}, repository says {got}")
+                failures.append(f"{entry['repo']}: {label}: table says {quoted}, repository says {got}, "
+                                f"on page: {on_page(quoted, readme)}")
     if failures:
         print("\n" + "\n".join(failures))
         return 1
