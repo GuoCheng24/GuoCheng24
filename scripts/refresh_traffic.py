@@ -124,6 +124,7 @@ def main() -> int:
                 print(f"  {name}: pypistats rate-limited, carrying forward "
                       f"{prev_pypi[name]['last_month']} from {prev_pypi[name].get('as_of','?')}")
 
+    today = _dt.date.today().isoformat()
     hist_path = ROOT / "data" / "traffic.json"
     hist_path.parent.mkdir(exist_ok=True)
     hist = json.loads(hist_path.read_text()) if hist_path.exists() else []
@@ -134,7 +135,6 @@ def main() -> int:
     hist_path.write_text(json.dumps(hist, indent=1, ensure_ascii=False) + "\n")
 
     rows.sort(key=lambda r: -r[3])
-    today = _dt.date.today().isoformat()
     out = [f"| Repository | People who cloned it, CI excluded ({today}) | Raw total | PyPI / month |",
            "|---|---|---|---|"]
     for name, count, uniques, clean_u in rows:
@@ -149,7 +149,24 @@ def main() -> int:
         out.append(f"| {repo_link} | {cell} | {raw} | {pcell} |")
     table = "\n".join(out)
 
+    # The prose quoted "about 2,300 installs a month" for four days after it had become
+    # 821: the table's badges are dynamic, the sentence above them was not. Both places
+    # the total appears are rewritten here from this same snapshot, so the page cannot
+    # again be 2.8x high while every badge next to it is right.
+    total = sum(v["last_month"] for v in snapshot["pypi"].values())
+    rounded = int(round(total, -1))
+
     readme = ROOT / "README.md"
+    text = readme.read_text(encoding="utf-8")
+    before = text
+    text = re.sub(r"\*\*about [\d,]+ installs a month with mirrors excluded\*\*",
+                  f"**about {rounded:,} installs a month with mirrors excluded**", text)
+    text = re.sub(r"\*\*about [\d,]+ installs a month across four packages\*\* \(\d{4}-\d{2}-\d{2}\)",
+                  f"**about {rounded:,} installs a month across four packages** ({today})", text)
+    text = re.sub(r"read \d{4}-\d{2}-\d{2} — the figure including", f"read {today} — the figure including", text)
+    if text != before:
+        readme.write_text(text, encoding="utf-8")
+        print(f"  prose PyPI total rewritten to {rounded:,} ({today})")
     body = readme.read_text(encoding="utf-8").split("\n")
     try:
         a = next(k for k, l in enumerate(body) if l.startswith("| Repository |"))

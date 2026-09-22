@@ -5,16 +5,17 @@ the numbers that stopped meaning what they say, in vLLM, TRL, verl and my own ha
 can reach. Background: inverse problems and medical-imaging AI at the University of Chinese Academy of
 Sciences, which is where the habit of measuring the ceiling before building the method comes from.
 
-- [huggingface/trl#7269](https://github.com/huggingface/trl/pull/7269) (closed unmerged): removes the truncated-support term from GRPO's vLLM
-  importance-sampling ratio — **0.896 → 1.001** at `top_p=0.8` for an unchanged policy, and the logged
-  mismatch **0.043 → 0.007** in a real colocated run.
 - [vllm-project/vllm#55634](https://github.com/vllm-project/vllm/issues/55634): an aborted request's prefill leaks into `prompt_tokens_total`;
   **two contributors opened fixes the next day**, one [approved by a maintainer](https://github.com/vllm-project/vllm/pull/55940).
 - **Four of the pull requests are merged**, two of them code fixes in [MLEvolve](https://github.com/InternScience/MLEvolve)
-  (#1 on MLE-bench). Four packages on PyPI, **about 2,300 installs a month**
-  ([pypistats](https://pypistats.org/packages/scholarcheck), read 2026-09-18).
+  (#1 on MLE-bench). Four packages on PyPI, **about 820 installs a month with mirrors excluded**
+  ([pypistats](https://pypistats.org/packages/scholarcheck), read 2026-09-22 — the figure including
+  mirrors is 3,042, and quoting that one would be quoting bandersnatch).
 - [batch-logprob-gap](https://github.com/GuoCheng24/batch-logprob-gap): bf16 batch-shape noise measured on eight models, fp16 shown
   to remove it, and a six-arm, two-seed GRPO run bounding its effect on reward at about a point.
+- [huggingface/trl#7269](https://github.com/huggingface/trl/pull/7269) (closed unmerged, reopen requested):
+  removes the truncated-support term from GRPO's vLLM importance-sampling ratio — **0.896 → 1.001** at
+  `top_p=0.8` for an unchanged policy, and the logged mismatch **0.043 → 0.007** in a real colocated run.
 
 Open to research-engineering work on RL post-training infrastructure — chengguo24@mails.ucas.ac.cn.
 
@@ -60,9 +61,16 @@ stops meaning what it says — nothing raises, nothing is red, and the number is
 ### Who actually uses this
 
 Stars are a poor signal at this size. The number that does not depend on trusting me is on PyPI —
-**about 2,300 installs a month across four packages** (2026-09-18) — and clone traffic is below, with
-my own CI checkouts excluded: the first version of this table counted them as people, and the
-correction, with the raw API responses, is in [MEASUREMENT.md](MEASUREMENT.md).
+**about 820 installs a month across four packages** (2026-09-22) — and clone traffic is below, with my
+own CI checkouts excluded: the first version of this table counted them as people, and the correction,
+with the raw API responses, is in [MEASUREMENT.md](MEASUREMENT.md).
+
+Two things that figure is not. It is **not** the number PyPI's own badge shows: 72% of the raw
+downloads are mirrors (3,042 with them, 821 without), and quoting the larger one would be quoting
+bandersnatch rather than a person. And it is **down from 2,222 four days earlier**, which is what
+happens when four packages published in mid-August roll their launch week out of a 30-day window —
+the earlier figure was not wrong on its date, it was a launch. `scripts/refresh_traffic.py` now
+rewrites this sentence from the same snapshot that feeds the badges, so it cannot drift again.
 
 | Repository | People who cloned it, CI excluded (2026-09-08) | Raw total | PyPI / month |
 |---|---|---|---|
