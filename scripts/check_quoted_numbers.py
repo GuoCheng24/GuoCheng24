@@ -42,19 +42,19 @@ QUOTED = [
         ],
     },
     {
-        # This page once quoted taichu's "82.0% [73.3, 88.3] contains 84.50" as a reproduction.
-        # The repository then measured its own subset: 5.33 points easier than the rest of the
-        # benchmark, which is the ifeval lesson repeated. The page now quotes the projected
-        # full-set figures and the subset gap, all from the file that derives them.
+        # This page once quoted taichu's "82.0% [73.3, 88.3] contains 84.50" as a reproduction,
+        # then over-corrected and quoted one adjusted estimate as if it were the estimate. The
+        # subsample is a uniform random draw, so several estimators of the full-set accuracy are
+        # legitimate and they disagree by five points; the row quotes the span and the tightest.
         "repo": "taichu-eval-reproduction",
         "path": "results/representativeness.json",
         "checks": [
-            ("cvbench.projected_on", 88.45, 2),
-            ("cvbench.projected_on_ci", [82.6, 94.3], None),
-            ("mathvista.projected_on", 77.20, 2),
-            ("mathvista.projected_on_ci", [68.9, 85.5], None),
-            ("mathvista.subset_easier_by", 5.33, 2),
-            ("mathvista.n_rest", 900, None),
+            ("cvbench.estimators.difference.value", 88.45, 2),
+            ("cvbench.estimators.direct.value", 89.33, 2),
+            ("mathvista.estimators.difference.value", 77.20, 2),
+            ("mathvista.estimators.direct.value", 82.00, 2),
+            ("mathvista.estimators.regression.value", 79.75, 2),
+            ("mathvista.estimators.regression.ci", [73.6, 85.9], None),
         ],
         "derived": [],
     },
