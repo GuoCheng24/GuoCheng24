@@ -92,7 +92,7 @@ def dig(d, path):
 README = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "README.md")
 
 
-def on_page(quoted, readme):
+def on_page(quoted, readme, places=None):
     """Is the figure, as this table writes it, actually on the page?
 
     Until this existed the loop compared the table above against the repository and never
@@ -103,7 +103,9 @@ def on_page(quoted, readme):
     import re
     if isinstance(quoted, list):
         return f"[{', '.join(str(x) for x in quoted)}]" in readme
-    return re.search(r"(?<![\d.])" + re.escape(str(quoted)) + r"(?![\d])", readme) is not None
+    # written at the precision the table declares: 77.20 is "77.20" on the page, not "77.2"
+    text = f"{quoted:.{places}f}" if places is not None and isinstance(quoted, float) else str(quoted)
+    return re.search(r"(?<![\d.])" + re.escape(text) + r"(?![\d])", readme) is not None
 
 
 def main() -> int:
@@ -121,20 +123,20 @@ def main() -> int:
         for path, quoted, places in entry["checks"]:
             actual = dig(data, path)
             got = round(actual, places) if places is not None else actual
-            ok = got == quoted and on_page(quoted, readme)
+            ok = got == quoted and on_page(quoted, readme, places)
             state = "ok" if ok else ("MISMATCH" if got != quoted else "NOT ON PAGE")
             print(f"  {entry['repo']}  {path:<44} page {quoted}  repo {got}  {state}")
             if not ok:
                 failures.append(f"{entry['repo']}.{path}: table says {quoted}, repository says {got}, "
-                                f"on page: {on_page(quoted, readme)}")
+                                f"on page: {on_page(quoted, readme, places)}")
         for label, fn, quoted, places in entry.get("derived", []):
             got = round(fn(data), places)
-            ok = got == quoted and on_page(quoted, readme)
+            ok = got == quoted and on_page(quoted, readme, places)
             state = "ok" if ok else ("MISMATCH" if got != quoted else "NOT ON PAGE")
             print(f"  {entry['repo']}  {label:<44} page {quoted}  repo {got}  {state}")
             if not ok:
                 failures.append(f"{entry['repo']}: {label}: table says {quoted}, repository says {got}, "
-                                f"on page: {on_page(quoted, readme)}")
+                                f"on page: {on_page(quoted, readme, places)}")
     if failures:
         print("\n" + "\n".join(failures))
         return 1
