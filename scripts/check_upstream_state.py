@@ -32,6 +32,7 @@ CLAIMS = [
     ("vllm-project/vllm", 55940, "pulls", "open"),
     ("vllm-project/vllm", 55837, "pulls", "closed"),
     ("vllm-project/vllm", 34333, "issues", "open"),
+    ("vllm-project/vllm", 56923, "pulls", "open"),       # mine
     ("odlgroup/odl", 1730, "pulls", "open"),
     ("odlgroup/odl", 359, "issues", "open"),
     ("InternScience/MLEvolve", 8, "pulls", "merged"),

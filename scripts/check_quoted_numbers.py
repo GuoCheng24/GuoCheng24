@@ -101,7 +101,7 @@ QUOTED = [
         ],
         "derived": [
             ("defects recorded in the ledger",
-             lambda d: len(d["findings"]), 22, None, "ledger of **{}** real defects"),
+             lambda d: len(d["findings"]), 23, None, "ledger of **{}** real defects"),
             ("verified fresh-eyes findings that were correct numbers in false sentences",
              lambda d: sum(1 for f in d["findings"]
                            if f.get("source") == "fresh-eyes-run-1"
