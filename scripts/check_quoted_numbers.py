@@ -42,6 +42,18 @@ QUOTED = [
         ],
     },
     {
+        # "fp16 removes it" was on this page while the repository's own T1 had pythia-160m
+        # at 22% in fp16; the qualification is only worth writing if it stays true.
+        "repo": "batch-logprob-gap",
+        "path": "results/hfonly_pythia-160m.json",
+        "checks": [],
+        "derived": [
+            ("fp16 batch 1 vs 8, pythia-160m",
+             lambda d: 100 * d["results"]["fp16|b1_vs_b8"]["out"] / d["n_tokens"], 22, 0,
+             "leaves {}% on pythia-160m"),
+        ],
+    },
+    {
         # This page once quoted taichu's "82.0% [73.3, 88.3] contains 84.50" as a reproduction,
         # then over-corrected and quoted one adjusted estimate as if it were the estimate. The
         # subsample is a uniform random draw, so several estimators of the full-set accuracy are

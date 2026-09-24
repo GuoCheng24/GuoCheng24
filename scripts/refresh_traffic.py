@@ -23,7 +23,8 @@ import urllib.request
 OWNER = "GuoCheng24"
 REPOS = ["worldmodel-from-scratch", "topocheck", "sciglyph", "scholarcheck", "docxaudit",
          "kakeya-conjecture-lab", "breakthrough-harness", "world-model-map",
-         "ct-reconstruction-harness", "ifeval-reproduction"]
+         "ct-reconstruction-harness", "ifeval-reproduction", "batch-logprob-gap",
+         "taichu-eval-reproduction", "doubleblind", "groundwork"]
 PYPI = {"scholarcheck": "scholarcheck", "sciglyph": "sciglyph", "docxaudit": "docxaudit",
         "topocheck": "topocheck"}
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -40,13 +41,19 @@ def api(path: str) -> dict:
         return json.load(r)
 
 
-def pypi_month(name: str) -> int | None:
-    try:
-        with urllib.request.urlopen(
-                f"https://pypistats.org/api/packages/{name}/recent", timeout=30) as r:
-            return json.load(r)["data"]["last_month"]
-    except Exception:
-        return None          # rate-limited or offline: fall back to a plain link
+def pypi_month(name: str, tries: int = 5) -> int | None:
+    # pypistats answers 429 to roughly one request in three from this machine; a single
+    # attempt carried three of four packages forward from their launch week on 2026-09-24.
+    import time
+    for k in range(tries):
+        try:
+            with urllib.request.urlopen(
+                    f"https://pypistats.org/api/packages/{name}/recent", timeout=30) as r:
+                return json.load(r)["data"]["last_month"]
+        except Exception:
+            if k < tries - 1:
+                time.sleep(15 * (k + 1))
+    return None          # still rate-limited or offline: the caller carries the last value
 
 
 def badge(label: str, value: str, colour: str) -> str:
@@ -155,18 +162,32 @@ def main() -> int:
     # again be 2.8x high while every badge next to it is right.
     total = sum(v["last_month"] for v in snapshot["pypi"].values())
     rounded = int(round(total, -1))
+    # A carried-forward value is as old as the day it was read, so the sentence takes the
+    # oldest date among its parts. Stamping today on a total that mixed a launch-week
+    # figure with today's ones is how it once read 1,690 when the real number was 940.
+    as_of = min([v.get("as_of", today) for v in snapshot["pypi"].values()] or [today])
+    if as_of != today:
+        print(f"  WARNING: PyPI total includes values carried forward from {as_of}")
 
     readme = ROOT / "README.md"
     text = readme.read_text(encoding="utf-8")
     before = text
-    text = re.sub(r"\*\*about [\d,]+ installs a month with mirrors excluded\*\*",
-                  f"**about {rounded:,} installs a month with mirrors excluded**", text)
-    text = re.sub(r"\*\*about [\d,]+ installs a month across four packages\*\* \(\d{4}-\d{2}-\d{2}\)",
-                  f"**about {rounded:,} installs a month across four packages** ({today})", text)
-    text = re.sub(r"read \d{4}-\d{2}-\d{2} — the figure including", f"read {today} — the figure including", text)
+    # Each site must match exactly once. The second pattern once required ")" straight after
+    # the date; a later edit added a clause inside the parentheses, the pattern stopped
+    # matching, and the sentence kept its old total for two days without a word.
+    for pat, rep in [
+            (r"\*\*about [\d,]+ installs a month with mirrors excluded\*\*",
+             f"**about {rounded:,} installs a month with mirrors excluded**"),
+            (r"\*\*about [\d,]+ installs a month across four packages\*\* \(\d{4}-\d{2}-\d{2}",
+             f"**about {rounded:,} installs a month across four packages** ({as_of}"),
+            (r"read \d{4}-\d{2}-\d{2} — the figure including",
+             f"read {as_of} — the figure including")]:
+        text, n = re.subn(pat, rep, text)
+        if n != 1:
+            raise SystemExit(f"expected one match for {pat!r} in README.md, found {n}")
     if text != before:
         readme.write_text(text, encoding="utf-8")
-        print(f"  prose PyPI total rewritten to {rounded:,} ({today})")
+        print(f"  prose PyPI total rewritten to {rounded:,} (as of {as_of})")
     body = readme.read_text(encoding="utf-8").split("\n")
     try:
         a = next(k for k, l in enumerate(body) if l.startswith("| Repository |"))
