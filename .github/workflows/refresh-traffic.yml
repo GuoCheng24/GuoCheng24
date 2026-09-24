@@ -56,6 +56,16 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Star counts are somebody else's number, written by hand on a page that
+      # is otherwise checked. The table said 91k for vLLM at 92,579 and said
+      # nothing at all next to a 39k repository with two merged pull requests.
+      # This rewrites them daily; a repository it cannot reach keeps the text
+      # already there rather than being guessed at.
+      - name: refresh the upstream star counts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/refresh_upstream_stars.py
+
       - name: rewrite the table from the traffic API
         id: refresh
         env:

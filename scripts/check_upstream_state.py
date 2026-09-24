@@ -41,6 +41,8 @@ CLAIMS = [
     ("InternScience/InternAgent", 27, "pulls", "open"),
     ("ResearAI/DeepScientist", 110, "pulls", "open"),
     ("huggingface/trl", 7269, "pulls", "closed"),
+    ("huggingface/trl", 6789, "issues", "open"),      # the maintainer's own issue the fix is for
+    ("cline/prompts", 46, "pulls", "open"),
 ]
 
 MERGED_CLAIMED_IN_PROSE = 4     # "Four of the pull requests are merged"
