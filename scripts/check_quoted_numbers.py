@@ -46,17 +46,34 @@ QUOTED = [
         # then over-corrected and quoted one adjusted estimate as if it were the estimate. The
         # subsample is a uniform random draw, so several estimators of the full-set accuracy are
         # legitimate and they disagree by five points; the row quotes the span and the tightest.
+        # The estimators this page used to quote are superseded by the full-set
+        # measurement. They still exist in representativeness.json and still
+        # have the same values, so checking them would pass while the page told
+        # a story the repository no longer tells - which is the failure this
+        # whole script was written for, one level up.
         "repo": "taichu-eval-reproduction",
-        "path": "results/representativeness.json",
+        "path": "results/metrics_fullset_cvbench.json",
         "checks": [
-            ("cvbench.estimators.difference.value", 88.45, 2),
-            ("cvbench.estimators.direct.value", 89.33, 2),
-            ("mathvista.estimators.difference.value", 77.20, 2),
-            ("mathvista.estimators.direct.value", 82.00, 2),
-            ("mathvista.estimators.regression.value", 79.75, 2),
-            ("mathvista.estimators.regression.ci", [73.6, 85.9], None),
+            ("accuracy_pct", 87.26, 2),
+            ("ci_pct", [85.93, 88.51], 2),
         ],
         "derived": [],
+    },
+    {
+        "repo": "taichu-eval-reproduction",
+        "path": "results/metrics_fullset_mathvista.json",
+        "checks": [
+            ("accuracy_pct", 82.40, 2),
+            ("ci_pct", [79.90, 84.71], 2),
+            ("accuracy_unclosed_as_wrong_pct", 80.80, 2),
+            ("ci_unclosed_as_wrong_pct", [78.22, 83.20], 2),
+        ],
+        "derived": [
+            ("truncated generations the extractor credits",
+             lambda d: round((d["accuracy_pct"] - d["accuracy_unclosed_as_wrong_pct"])
+                             * d["n"] / 100), 16, None,
+             "rests on **{}** truncated generations"),
+        ],
     },
     {
         # doubleblind's row quotes counts over its own ledger, and a ledger grows
@@ -72,7 +89,7 @@ QUOTED = [
         ],
         "derived": [
             ("defects recorded in the ledger",
-             lambda d: len(d["findings"]), 20, None, "ledger of **{}** real defects"),
+             lambda d: len(d["findings"]), 22, None, "ledger of **{}** real defects"),
             ("verified fresh-eyes findings that were correct numbers in false sentences",
              lambda d: sum(1 for f in d["findings"]
                            if f.get("source") == "fresh-eyes-run-1"
@@ -90,6 +107,18 @@ QUOTED = [
             ("ways a direction dies", lambda d: len(d["causes"]), 10, None,
              "archive of **{}** ways a"),
         ],
+    },
+    {
+        # A count of files in a directory is not fetchable over raw., so
+        # groundwork commits it: archive/inventory.json is written and checked
+        # by that repository's own test suite, which is what makes it evidence
+        # rather than a number restated here from memory.
+        "repo": "groundwork",
+        "path": "archive/inventory.json",
+        "checks": [
+            ("notes", 43, None, "**{}** stage notes"),
+        ],
+        "derived": [],
     },
     {
         "repo": "ct-reconstruction-harness",
@@ -149,7 +178,11 @@ def on_page(quoted, readme, places=None, near=None):
     """
     import re
     if isinstance(quoted, list):
-        return f"[{', '.join(str(x) for x in quoted)}]" in readme
+        # at the precision the table declares, like the scalar branch below:
+        # the page writes [79.90, 84.71] and str(79.9) is "79.9"
+        def fmt(x):
+            return f"{x:.{places}f}" if places is not None and isinstance(x, float) else str(x)
+        return f"[{', '.join(fmt(x) for x in quoted)}]" in readme
     # written at the precision the table declares: 77.20 is "77.20" on the page, not "77.2"
     text = f"{quoted:.{places}f}" if places is not None and isinstance(quoted, float) else str(quoted)
     # A small whole number is on almost every page somewhere. Deleting "a ledger
@@ -160,6 +193,20 @@ def on_page(quoted, readme, places=None, near=None):
         return re.search(re.escape(near).replace(re.escape("{}"), re.escape(text)),
                          readme) is not None
     return re.search(r"(?<![\d.])" + re.escape(text) + r"(?![\d])", readme) is not None
+
+
+def _round(v, places):
+    """Round a number, or every number in an interval.
+
+    An interval is the most load-bearing thing this page quotes and the
+    hardest to restate correctly, so it has to be checkable. The results files
+    store full precision; the page writes two decimals.
+    """
+    if places is None:
+        return v
+    if isinstance(v, (list, tuple)):
+        return [round(x, places) for x in v]
+    return round(v, places)
 
 
 def main() -> int:
@@ -176,7 +223,7 @@ def main() -> int:
             return 0 if os.environ.get("ALLOW_OFFLINE") else 1
         for path, quoted, places, near in (_pad(t, 4) for t in entry["checks"]):
             actual = dig(data, path)
-            got = round(actual, places) if places is not None else actual
+            got = _round(actual, places)
             ok = got == quoted and on_page(quoted, readme, places, near)
             state = "ok" if ok else ("MISMATCH" if got != quoted else "NOT ON PAGE")
             print(f"  {entry['repo']}  {path:<44} page {quoted}  repo {got}  {state}")
@@ -184,7 +231,7 @@ def main() -> int:
                 failures.append(f"{entry['repo']}.{path}: table says {quoted}, repository says {got}, "
                                 f"on page: {on_page(quoted, readme, places, near)}")
         for label, fn, quoted, places, near in (_pad(t, 5) for t in entry.get("derived", [])):
-            got = round(fn(data), places)
+            got = _round(fn(data), places)
             ok = got == quoted and on_page(quoted, readme, places, near)
             state = "ok" if ok else ("MISMATCH" if got != quoted else "NOT ON PAGE")
             print(f"  {entry['repo']}  {label:<44} page {quoted}  repo {got}  {state}")
